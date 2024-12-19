@@ -42,7 +42,13 @@ const handleLocationInfo = (info) => {
 const handleNavigator = (type) => {
   if (type === "from" || type === "to") {
     wx.miniProgram.navigateTo({
-      url: `/pages/commonChooseArea/index?type=${type}&city=${currentCity.value}&longitude=${mapData.longitude}&latitude=${mapData.latitude}&name=${mapData.currentAreaName}&address=${mapData.address}`,
+      url: `/pages/commonChooseArea/index?type=${type}&city=${
+        currentCity.value
+      }&longitude=${mapData.longitude}&latitude=${
+        mapData.latitude
+      }&name=${encodeURIComponent(
+        mapData.currentAreaName
+      )}&address=${encodeURIComponent(mapData.address)}`,
     });
   }
 };

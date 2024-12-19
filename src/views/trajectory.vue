@@ -23,9 +23,9 @@ const changeDateType = (v) => {
   currentDateType.value = v;
 };
 
-const handleSelectPassenger = () => {
+const handleSelectPassenger = (type) => {
   wx.miniProgram.navigateTo({
-    url: "/pages/chooseArea/addPerson",
+    url: `/pages/chooseArea/addPerson?type=${type}`,
   });
 };
 
@@ -417,20 +417,28 @@ const passengerInfo = reactive({
   name: "",
   phone: "",
   companionList: [],
+  companionStr: "",
 });
 
 watch(
   () => route.params,
   () => {
+    console.log(route.query);
     const query = route.query;
     if (query.phone && query.name) {
       passengerInfo.name = query.name;
       passengerInfo.phone = query.phone;
-      const companionList = JSON.parse(query.companionList) || [];
-      console.log(companionList);
+    }
+    if (query.companionList) {
+      const companionList = JSON.parse(query.companionList || "[]");
+      passengerInfo.companionList = companionList;
+      passengerInfo.companionStr = companionList[0].companionName;
+      if (companionList.length > 1) {
+        passengerInfo.companionStr += `等`;
+      }
     }
   },
-  { deep: true }
+  { deep: true, immediate: true }
 );
 
 const handleOrder = () => {
@@ -489,7 +497,6 @@ const mountedData = ref("");
 onMounted(() => {
   initMap();
   mountedData.value = new Date();
-  showToast("No need to import showToast");
 });
 </script>
 
@@ -538,27 +545,43 @@ onMounted(() => {
         </div>
       </div>
       <div class="options">
-        <div>
+        <div class="item">
           <img src="@/assets/clock.png" alt="" />
-          <span>现在出发</span>
-          <img src="@/assets/right.png" alt="" />
+          <span class="title">现在出发</span>
+          <img class="right-icon" src="@/assets/right.png" alt="" />
         </div>
-        <div @click="handleSelectPassenger">
+        <div class="divider"></div>
+        <div class="item" @click="handleSelectPassenger('passenger')">
           <img src="@/assets/clock.png" alt="" />
-          <span>{{
+          <span class="title">{{
             passengerInfo.name ? passengerInfo.name : "选择乘车人"
           }}</span>
-          <img src="@/assets/right.png" alt="" />
+          <img class="right-icon" src="@/assets/right.png" alt="" />
+        </div>
+      </div>
+      <div class="options">
+        <div class="item" @click="handleSelectPassenger('companion')">
+          <img src="@/assets/companion.png" alt="" />
+          <span class="title">
+            {{ passengerInfo.companionStr || "选择同行人" }}
+          </span>
+          <img class="right-icon" src="@/assets/right.png" alt="" />
+        </div>
+        <div class="divider"></div>
+        <div class="item">
+          <img src="@/assets/useRes.png" alt="" />
+          <span class="title">{{
+            passengerInfo.name ? passengerInfo.name : "用车事由"
+          }}</span>
+          <img class="right-icon" src="@/assets/right.png" alt="" />
         </div>
       </div>
       <div class="btns">
-        <!-- <div class="div-btn person">个人用车</div>
-        <div class="div-btn company">企业派车</div> -->
         <div class="bottom-price-wrap">
           <div>预估<span class="bottom-price">15.82-14.91</span>元</div>
           <div class="bottom-choose">已选2种车型</div>
         </div>
-        <div class="bottom-btn" @click="handleOrder">立即打车</div>
+        <div class="bottom-btn" @click="handleOrder">下一步</div>
       </div>
     </div>
   </div>
@@ -675,16 +698,29 @@ onMounted(() => {
     font-weight: 700;
     color: #41485d;
     font-size: 14px;
-    > div {
+    border-bottom: 1px solid #f5f7fb;
+    .divider {
+      width: 1px;
+      height: 100%;
+      background-color: #f5f7fb;
+    }
+    .title {
+      min-width: 70px;
+    }
+    .item {
       display: flex;
       align-items: center;
-      justify-content: center;
       color: #41485d;
       font-size: 14px;
+      min-width: 40%;
       img {
         width: 12px;
         height: 12px;
         margin-right: 8px;
+      }
+      .right-icon {
+        width: 24px;
+        height: 24px;
       }
     }
   }
@@ -715,13 +751,6 @@ onMounted(() => {
     .bottom-choose {
       font-size: 0.714rem;
     }
-
-    // .person {
-    //   background: #3d1a00;
-    // }
-    // .company {
-    //   background: linear-gradient(90deg, #f3741f 0%, #f4b809 100%);
-    // }
   }
 }
 #trajectory-wrap {

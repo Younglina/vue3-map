@@ -328,7 +328,15 @@ const handleSelectPOI = (item) => {
   }
   if (route.query.type === "to") {
     wx.miniProgram.navigateTo({
-      url: `/pages/trajectory/index?flng=${route.query.longitude}&flat=${route.query.latitude}&fname=${route.query.name}&faddress=${route.query.address}&tlng=${longitude}&tlat=${latitude}&tname=${item.name}&taddress=${item.address}`,
+      url: `/pages/trajectory/index?flng=${route.query.longitude}&flat=${
+        route.query.latitude
+      }&fname=${encodeURIComponent(
+        route.query.name
+      )}&faddress=${encodeURIComponent(
+        route.query.address
+      )}&tlng=${longitude}&tlat=${latitude}&tname=${encodeURIComponent(
+        item.name
+      )}&taddress=${encodeURIComponent(item.address)}`,
     });
   }
 };
