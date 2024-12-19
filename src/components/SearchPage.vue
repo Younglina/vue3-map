@@ -3,16 +3,17 @@ import AMapLoader from "@amap/amap-jsapi-loader";
 import Empty from "./Empty.vue";
 import { ref, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-const currentCity = ref("");
 
+const currentCity = ref("");
 const route = useRoute();
+
 let AMap = null;
 window._AMapSecurityConfig = {
-  securityJsCode: "",
+  securityJsCode: "9537a21ee34efb281c3fe92b4f1055bf",
 };
 onMounted(() => {
   AMapLoader.load({
-    key: "",
+    key: "0f20018974e4ab2189ad2d9f8b0a5702",
     version: "2.0",
   }).then((Map) => {
     AMap = Map;
@@ -310,19 +311,26 @@ const getPOIByLocation = async (location) => {
 
 const router = useRouter();
 const handleSelectPOI = (item) => {
-  console.log(item);
+  console.log(item, route.query);
   const [longitude, latitude] = item.location.split(",");
-  router.push({
-    path: "/home",
-    query: {
-      longitude,
-      latitude,
-      city: currentCity.value,
-      address: item.address,
-      name: item.name,
-      type: route.query.type,
-    },
-  });
+  if (route.query.type === "from") {
+    router.push({
+      path: "/home",
+      query: {
+        longitude,
+        latitude,
+        city: currentCity.value,
+        address: item.address,
+        name: item.name,
+        type: "from",
+      },
+    });
+  }
+  if (route.query.type === "to") {
+    wx.miniProgram.navigateTo({
+      url: `/pages/trajectory/index?flng=${route.query.longitude}&flat=${route.query.latitude}&fname=${route.query.name}&faddress=${route.query.address}&tlng=${longitude}&tlat=${latitude}&tname=${item.name}&taddress=${item.address}`,
+    });
+  }
 };
 </script>
 <template>

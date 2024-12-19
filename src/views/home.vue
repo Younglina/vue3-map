@@ -8,6 +8,7 @@ const currentCity = ref("");
 const currentType = ref("firm");
 const mapData = reactive({
   currentAreaName: "",
+  address: "",
   longitude: "",
   latitude: "",
   markerData: [],
@@ -23,17 +24,25 @@ const mapLoaded = (m) => {
 };
 
 const handleLocationInfo = (info) => {
-  currentCity.value = info.cityInfo.name;
+  currentCity.value =
+    localStorage.getItem("CURRENT_CITY") || info.cityInfo.name;
+  localStorage.setItem("CURRENT_CITY", info.cityInfo.name);
   mapData.currentAreaName = info.name;
   if (info.longitude && info.latitude) {
     [mapData.longitude, mapData.latitude] = [info.longitude, info.latitude];
   }
+  mapData.markerData[0] = {
+    name: info.name,
+    longitude: info.longitude,
+    latitude: info.latitude,
+    address: info.address,
+  };
 };
 
 const handleNavigator = (type) => {
   if (type === "from" || type === "to") {
     wx.miniProgram.navigateTo({
-      url: `/pages/commonChooseArea/index?type=${type}&city=${currentCity.value}`,
+      url: `/pages/commonChooseArea/index?type=${type}&city=${currentCity.value}&longitude=${mapData.longitude}&latitude=${mapData.latitude}&name=${mapData.currentAreaName}&address=${mapData.address}`,
     });
   }
 };
@@ -44,6 +53,7 @@ function setArea(data) {
     mapData.currentAreaName = data.name;
     mapData.longitude = data.longitude;
     mapData.latitude = data.latitude;
+    mapData.address = data.address;
   }
   if (data.type === "home") {
     commonHome.value = data.name;
@@ -55,6 +65,7 @@ function setArea(data) {
 
 const route = useRoute();
 onMounted(() => {
+  currentCity.value = localStorage.getItem("CURRENT_CITY") || "";
   // request({
   //   url: "/v1/common/miscellaneous/weather",
   // }).then((res) => {

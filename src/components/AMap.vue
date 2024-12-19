@@ -46,12 +46,12 @@ const startPoint = ref(null);
 const endPoint = ref(null);
 
 window._AMapSecurityConfig = {
-  securityJsCode: "",
+  securityJsCode: "9537a21ee34efb281c3fe92b4f1055bf",
 };
 // 初始化地图
 const initMap = async ({ longitude, latitude }) => {
   AMapLoader.load({
-    key: "",
+    key: "0f20018974e4ab2189ad2d9f8b0a5702",
     version: "2.0",
   })
     .then((Map) => {
@@ -594,15 +594,15 @@ const getPOIByLocation = async (location) => {
 
 // 跳转到搜索页面
 const goToSearch = () => {
-  const center = AMap.getCenter();
-  router.push({
-    path: "/search",
-    query: {
-      lat: center.lat,
-      lng: center.lng,
-      address: currentAddress.value,
-    },
-  });
+  // const center = AMap.getCenter();
+  // router.push({
+  //   path: "/search",
+  //   query: {
+  //     lat: center.lat,
+  //     lng: center.lng,
+  //     address: currentAddress.value,
+  //   },
+  // });
 };
 
 // 路径规划
