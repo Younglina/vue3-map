@@ -17,9 +17,9 @@ onMounted(() => {
     version: "2.0",
   }).then((Map) => {
     AMap = Map;
-    currentCity.value = route.query.city;
-    getPOIByLocation([route.query.longitude, route.query.latitude]);
+    // getPOIByLocation([route.query.longitude, route.query.latitude]);
   });
+  currentCity.value = route.query.city;
 });
 
 const inputValue = ref("");
@@ -63,251 +63,251 @@ watch(inputValue, handleInput(inputValue));
 const historySearchList = ref([]);
 const pois = ref([]);
 // 获取POI信息
-const getPOIByLocation = async (location) => {
-  // 创建地理编码插件
-  // AMap.plugin("AMap.Geocoder", () => {
-  //   const geocoder = new AMap.Geocoder({
-  //     radius: 1000,
-  //     extensions: "all",
-  //   });
+// const getPOIByLocation = async (location) => {
+//   // 创建地理编码插件
+//   // AMap.plugin("AMap.Geocoder", () => {
+//   //   const geocoder = new AMap.Geocoder({
+//   //     radius: 1000,
+//   //     extensions: "all",
+//   //   });
 
-  //   geocoder.getAddress(location, (status, result) => {
-  const status = "complete";
-  const result = {
-    status: "1",
-    regeocode: {
-      roads: [
-        {
-          id: "0571H51F0220022711",
-          location: "120.222,30.2201",
-          direction: "西北",
-          name: "滨盛路",
-          distance: "113.306",
-        },
-        {
-          id: "0571H51F022002673590",
-          location: "120.219,30.2196",
-          direction: "东北",
-          name: "建设河绿道",
-          distance: "226.262",
-        },
-        {
-          id: "0571H51F0220023053",
-          location: "120.219,30.2191",
-          direction: "东北",
-          name: "西兴路",
-          distance: "279.342",
-        },
-      ],
-      roadinters: [
-        {
-          second_name: "建设河绿道",
-          first_id: "0571H51F022002615911",
-          second_id: "0571H51F022002673590",
-          location: "120.217992,30.220459",
-          distance: "307.546",
-          first_name: "一号支路",
-          direction: "东",
-        },
-      ],
-      formatted_address: "浙江省杭州市滨江区西兴街道滨盛路",
-      addressComponent: {
-        city: "杭州市",
-        province: "浙江省",
-        adcode: "330108",
-        district: "滨江区",
-        towncode: "330108001000",
-        streetNumber: {
-          number: "126号",
-          location: "120.222390,30.221221",
-          direction: "东",
-          distance: "125.268",
-          street: "滨盛路",
-        },
-        country: "中国",
-        township: "西兴街道",
-        businessAreas: [
-          {
-            location: "120.221721,30.194076",
-            name: "西兴",
-            id: "330108",
-          },
-        ],
-        building: {
-          name: [],
-          type: [],
-        },
-        neighborhood: {
-          name: [],
-          type: [],
-        },
-        citycode: "0571",
-      },
-      aois: [],
-      pois: [
-        {
-          id: "B0J2FS1NZQ",
-          direction: "西",
-          businessarea: "西兴",
-          address: "奥体街520号",
-          poiweight: "0.306968",
-          name: "杭州高级中学附属滨江中学",
-          location: "120.218991,30.221297",
-          distance: "214.479",
-          tel: [],
-          type: "科教文化服务;学校;中学",
-        },
-        {
-          id: "B0FFF4AVAW",
-          direction: "东南",
-          businessarea: "西兴",
-          address: "滨盛路附近",
-          poiweight: "0.302125",
-          name: "缤纷北苑",
-          location: "120.222636,30.218547",
-          distance: "292.216",
-          tel: "0571-87165705",
-          type: "商务住宅;住宅区;住宅小区",
-        },
-        {
-          id: "B023B19OJH",
-          direction: "东南",
-          businessarea: "西兴",
-          address: "缤纷北苑30号",
-          poiweight: "0.183438",
-          name: "杭州市滨江区缤纷幼儿园",
-          location: "120.222917,30.219208",
-          distance: "248.191",
-          tel: "0571-85158139",
-          type: "科教文化服务;学校;幼儿园",
-        },
-        {
-          id: "B0H0LMEQBZ",
-          direction: "东北",
-          businessarea: "西兴",
-          address: "奥体路333号",
-          poiweight: "0.16605",
-          name: "杭州交通资产管理有限公司",
-          location: "120.223037,30.222827",
-          distance: "284.71",
-          tel: [],
-          type: "政府机构及社会团体;交通车辆管理;交通管理机构",
-        },
-        {
-          id: "B0FFJQ9T6K",
-          direction: "东北",
-          businessarea: "西兴",
-          address: "奥体街333号",
-          poiweight: "0.140821",
-          name: "杭州交通资产综合楼",
-          location: "120.223329,30.222557",
-          distance: "282.181",
-          tel: [],
-          type: "商务住宅;楼宇;商务写字楼",
-        },
-        {
-          id: "B0FFGAR5VX",
-          direction: "东",
-          businessarea: "西兴",
-          address: "丹枫路86号",
-          poiweight: "0.204238",
-          name: "印月尚庭",
-          location: "120.224984,30.220380",
-          distance: "370.942",
-          tel: [],
-          type: "商务住宅;住宅区;住宅小区",
-        },
-        {
-          id: "B0FFF5W73J",
-          direction: "东南",
-          businessarea: "西兴",
-          address: "缤纷北苑",
-          poiweight: "0.302125",
-          name: "缤纷北苑(西北1门)",
-          location: "120.222231,30.219765",
-          distance: "158.094",
-          tel: [],
-          type: "通行设施;临街院门;临街院门",
-        },
-        {
-          id: "B0JA7UXJZM",
-          direction: "西南",
-          businessarea: "西兴",
-          address: "滨盛路972号",
-          poiweight: "0.156173",
-          name: "高新硅谷亚运保障基地",
-          location: "120.219915,30.219893",
-          distance: "159.819",
-          tel: [],
-          type: "公司企业;公司企业;公司企业",
-        },
-        {
-          id: "B023B18D1K",
-          direction: "东南",
-          businessarea: "西兴",
-          address: "缤纷北苑",
-          poiweight: "0.310636",
-          name: "缤纷北苑1幢",
-          location: "120.221950,30.219397",
-          distance: "177.974",
-          tel: [],
-          type: "地名地址信息;门牌信息;楼栋号",
-        },
-        {
-          id: "B0FFIDOFDC",
-          direction: "东",
-          businessarea: "西兴",
-          address: "丹枫路86号印月尚庭",
-          poiweight: "0.230713",
-          name: "印月尚庭(西北门)",
-          location: "120.223401,30.220748",
-          distance: "215.505",
-          tel: [],
-          type: "通行设施;临街院门;临街院门",
-        },
-        {
-          id: "B023B18PMB",
-          direction: "南",
-          businessarea: "西兴",
-          address: "滨盛路附近",
-          poiweight: "0.076903",
-          name: "缤纷北苑2幢",
-          location: "120.221688,30.219090",
-          distance: "201.617",
-          tel: [],
-          type: "地名地址信息;门牌信息;楼栋号",
-        },
-        {
-          id: "B0IDA90UI9",
-          direction: "东",
-          businessarea: "西兴",
-          address: "丹枫路86号",
-          poiweight: "0.11304",
-          name: "滨江区西兴街道水电社区退役军人服务站",
-          location: "120.224570,30.219964",
-          distance: "341.892",
-          tel: "0571-87700087",
-          type: "政府机构及社会团体;政府机关;乡镇以下级政府及事业单位",
-        },
-      ],
-    },
-    info: "OK",
-    infocode: "10000",
-  };
-  if (status === "complete" && result.info === "OK") {
-    console.log(result.regeocode.pois);
-    pois.value = result.regeocode.pois.slice(0, 12).map((item) => {
-      item.unit = item.distance > 1000 ? "km" : "m";
-      item.distance =
-        item.distance > 1000
-          ? (item.distance / 1000).toFixed(1)
-          : (+item.distance).toFixed(1);
-      return item;
-    });
-  }
-  // });
-  // });
-};
+//   //   geocoder.getAddress(location, (status, result) => {
+//   const status = "complete";
+//   const result = {
+//     status: "1",
+//     regeocode: {
+//       roads: [
+//         {
+//           id: "0571H51F0220022711",
+//           location: "120.222,30.2201",
+//           direction: "西北",
+//           name: "滨盛路",
+//           distance: "113.306",
+//         },
+//         {
+//           id: "0571H51F022002673590",
+//           location: "120.219,30.2196",
+//           direction: "东北",
+//           name: "建设河绿道",
+//           distance: "226.262",
+//         },
+//         {
+//           id: "0571H51F0220023053",
+//           location: "120.219,30.2191",
+//           direction: "东北",
+//           name: "西兴路",
+//           distance: "279.342",
+//         },
+//       ],
+//       roadinters: [
+//         {
+//           second_name: "建设河绿道",
+//           first_id: "0571H51F022002615911",
+//           second_id: "0571H51F022002673590",
+//           location: "120.217992,30.220459",
+//           distance: "307.546",
+//           first_name: "一号支路",
+//           direction: "东",
+//         },
+//       ],
+//       formatted_address: "浙江省杭州市滨江区西兴街道滨盛路",
+//       addressComponent: {
+//         city: "杭州市",
+//         province: "浙江省",
+//         adcode: "330108",
+//         district: "滨江区",
+//         towncode: "330108001000",
+//         streetNumber: {
+//           number: "126号",
+//           location: "120.222390,30.221221",
+//           direction: "东",
+//           distance: "125.268",
+//           street: "滨盛路",
+//         },
+//         country: "中国",
+//         township: "西兴街道",
+//         businessAreas: [
+//           {
+//             location: "120.221721,30.194076",
+//             name: "西兴",
+//             id: "330108",
+//           },
+//         ],
+//         building: {
+//           name: [],
+//           type: [],
+//         },
+//         neighborhood: {
+//           name: [],
+//           type: [],
+//         },
+//         citycode: "0571",
+//       },
+//       aois: [],
+//       pois: [
+//         {
+//           id: "B0J2FS1NZQ",
+//           direction: "西",
+//           businessarea: "西兴",
+//           address: "奥体街520号",
+//           poiweight: "0.306968",
+//           name: "杭州高级中学附属滨江中学",
+//           location: "120.218991,30.221297",
+//           distance: "214.479",
+//           tel: [],
+//           type: "科教文化服务;学校;中学",
+//         },
+//         {
+//           id: "B0FFF4AVAW",
+//           direction: "东南",
+//           businessarea: "西兴",
+//           address: "滨盛路附近",
+//           poiweight: "0.302125",
+//           name: "缤纷北苑",
+//           location: "120.222636,30.218547",
+//           distance: "292.216",
+//           tel: "0571-87165705",
+//           type: "商务住宅;住宅区;住宅小区",
+//         },
+//         {
+//           id: "B023B19OJH",
+//           direction: "东南",
+//           businessarea: "西兴",
+//           address: "缤纷北苑30号",
+//           poiweight: "0.183438",
+//           name: "杭州市滨江区缤纷幼儿园",
+//           location: "120.222917,30.219208",
+//           distance: "248.191",
+//           tel: "0571-85158139",
+//           type: "科教文化服务;学校;幼儿园",
+//         },
+//         {
+//           id: "B0H0LMEQBZ",
+//           direction: "东北",
+//           businessarea: "西兴",
+//           address: "奥体路333号",
+//           poiweight: "0.16605",
+//           name: "杭州交通资产管理有限公司",
+//           location: "120.223037,30.222827",
+//           distance: "284.71",
+//           tel: [],
+//           type: "政府机构及社会团体;交通车辆管理;交通管理机构",
+//         },
+//         {
+//           id: "B0FFJQ9T6K",
+//           direction: "东北",
+//           businessarea: "西兴",
+//           address: "奥体街333号",
+//           poiweight: "0.140821",
+//           name: "杭州交通资产综合楼",
+//           location: "120.223329,30.222557",
+//           distance: "282.181",
+//           tel: [],
+//           type: "商务住宅;楼宇;商务写字楼",
+//         },
+//         {
+//           id: "B0FFGAR5VX",
+//           direction: "东",
+//           businessarea: "西兴",
+//           address: "丹枫路86号",
+//           poiweight: "0.204238",
+//           name: "印月尚庭",
+//           location: "120.224984,30.220380",
+//           distance: "370.942",
+//           tel: [],
+//           type: "商务住宅;住宅区;住宅小区",
+//         },
+//         {
+//           id: "B0FFF5W73J",
+//           direction: "东南",
+//           businessarea: "西兴",
+//           address: "缤纷北苑",
+//           poiweight: "0.302125",
+//           name: "缤纷北苑(西北1门)",
+//           location: "120.222231,30.219765",
+//           distance: "158.094",
+//           tel: [],
+//           type: "通行设施;临街院门;临街院门",
+//         },
+//         {
+//           id: "B0JA7UXJZM",
+//           direction: "西南",
+//           businessarea: "西兴",
+//           address: "滨盛路972号",
+//           poiweight: "0.156173",
+//           name: "高新硅谷亚运保障基地",
+//           location: "120.219915,30.219893",
+//           distance: "159.819",
+//           tel: [],
+//           type: "公司企业;公司企业;公司企业",
+//         },
+//         {
+//           id: "B023B18D1K",
+//           direction: "东南",
+//           businessarea: "西兴",
+//           address: "缤纷北苑",
+//           poiweight: "0.310636",
+//           name: "缤纷北苑1幢",
+//           location: "120.221950,30.219397",
+//           distance: "177.974",
+//           tel: [],
+//           type: "地名地址信息;门牌信息;楼栋号",
+//         },
+//         {
+//           id: "B0FFIDOFDC",
+//           direction: "东",
+//           businessarea: "西兴",
+//           address: "丹枫路86号印月尚庭",
+//           poiweight: "0.230713",
+//           name: "印月尚庭(西北门)",
+//           location: "120.223401,30.220748",
+//           distance: "215.505",
+//           tel: [],
+//           type: "通行设施;临街院门;临街院门",
+//         },
+//         {
+//           id: "B023B18PMB",
+//           direction: "南",
+//           businessarea: "西兴",
+//           address: "滨盛路附近",
+//           poiweight: "0.076903",
+//           name: "缤纷北苑2幢",
+//           location: "120.221688,30.219090",
+//           distance: "201.617",
+//           tel: [],
+//           type: "地名地址信息;门牌信息;楼栋号",
+//         },
+//         {
+//           id: "B0IDA90UI9",
+//           direction: "东",
+//           businessarea: "西兴",
+//           address: "丹枫路86号",
+//           poiweight: "0.11304",
+//           name: "滨江区西兴街道水电社区退役军人服务站",
+//           location: "120.224570,30.219964",
+//           distance: "341.892",
+//           tel: "0571-87700087",
+//           type: "政府机构及社会团体;政府机关;乡镇以下级政府及事业单位",
+//         },
+//       ],
+//     },
+//     info: "OK",
+//     infocode: "10000",
+//   };
+//   if (status === "complete" && result.info === "OK") {
+//     console.log(result.regeocode.pois);
+//     pois.value = result.regeocode.pois.slice(0, 12).map((item) => {
+//       item.unit = item.distance > 1000 ? "km" : "m";
+//       item.distance =
+//         item.distance > 1000
+//           ? (item.distance / 1000).toFixed(1)
+//           : (+item.distance).toFixed(1);
+//       return item;
+//     });
+//   }
+//   // });
+//   // });
+// };
 
 const router = useRouter();
 const handleSelectPOI = (item) => {
@@ -357,7 +357,7 @@ const handleSelectPOI = (item) => {
         </div>
         <span class="btn">取消</span>
       </div>
-      <div class="address-actions">
+      <!-- <div class="address-actions">
         <div class="item">
           <img src="@/assets/home.png" />
           <div class="address-info">
@@ -378,7 +378,7 @@ const handleSelectPOI = (item) => {
             <span class="title">地图选点</span>
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
     <div v-if="searchPOIList.length" class="around-wrap">
       <div
@@ -488,6 +488,7 @@ const handleSelectPOI = (item) => {
       border: none;
       background: transparent;
       min-height: 3.57rem;
+      outline: none;
       &::placeholder {
         font-weight: 700;
         color: #3475f5;

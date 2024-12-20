@@ -1,19 +1,23 @@
 <template>
   <div class="amap-wrap" id="amap-wrap">
     <div id="map-container" class="map"></div>
-    <div class="center-marker" @click="goToSearch">
-      <div class="text">{{ currentAddress.name }}</div>
+    <div class="center-marker">
+      <div class="text" @click="goToSearch">{{ currentAddress.name }}</div>
       <div class="line"></div>
       <div class="marker">
         <div class="marker-triangle"></div>
         <div class="marker-point"></div>
       </div>
     </div>
+    <div class="location-icon" @click="getCurrentLocation">
+      <img src="@/assets/location.png" mode="widthFix" />
+    </div>
   </div>
 </template>
 
 <script setup>
 import AMapLoader from "@amap/amap-jsapi-loader";
+import axios from "axios";
 import EndIcon from "@/assets/endIcon.png";
 import StratIcon from "@/assets/startIcon.png";
 import { ref, onMounted, watch } from "vue";
@@ -50,6 +54,26 @@ window._AMapSecurityConfig = {
 };
 // 初始化地图
 const initMap = async ({ longitude, latitude }) => {
+  // axios("/api/signature?url=" + encodeURIComponent(window.location.href))
+  //   .then((response) => response.json())
+  //   .then((data) => {
+  // const data = {
+  //   appId: "wxc6f5cb56394f1ae0",
+  //   nonceStr: "nCCb7U7xB6pD6jI8",
+  //   timestamp: 1734667874,
+  //   signature: "a314dd844f175c1af63464c2d45d5d5631c17f2f",
+  //   url: "http://localhost:5173/#/home?token=MTUxNzk4MTY4ODN8emgwMDAwMnwyMDI0LTEyLTE4IDE0OjE0OjMx&longitude=120.21201&latitude=30.2084",
+  // };
+  // console.log(data);
+  // wx.config({
+  //   debug: false,
+  //   appId: data.appId,
+  //   timestamp: data.timestamp,
+  //   nonceStr: data.nonceStr,
+  //   signature: data.signature,
+  //   jsApiList: ["getLocation"], // 根据需要配置所需接口
+  // });
+  // });
   AMapLoader.load({
     key: "0f20018974e4ab2189ad2d9f8b0a5702",
     version: "2.0",
@@ -74,25 +98,42 @@ const initMap = async ({ longitude, latitude }) => {
 };
 
 const getCurrentLocation = () => {
-  AMap.plugin("AMap.Geolocation", function () {
-    const geolocation = new AMap.Geolocation({
-      enableHighAccuracy: true, // 是否使用高精度定位，默认：true
-      timeout: 10000, // 设置定位超时时间，默认：无穷大
-      offset: [10, 20], // 定位按钮的停靠位置的偏移量
-      zoomToAccuracy: true, //  定位成功后调整地图视野范围使定位位置及精度范围视野内可见，默认：false
-      position: "RB", //  定位按钮的排放位置,  RB表示右下
-    });
-
-    geolocation.getCurrentPosition(function (status, result) {
-      if (status == "complete") {
-        console.log("定位成功", result);
-        map.setCenter([result.position.lng, result.position.lat]);
-        getPOIByLocation([result.position.lng, result.position.lat]);
-      } else {
-        console.log("定位失败", result);
-      }
-    });
+  wx.checkJsApi({
+    jsApiList: ["getLocation"], // 需要检测的JS接口列表，所有JS接口列表见附录2,
+    success: function (res) {
+      console.log(res);
+    },
+    fail: (err) => {
+      console.log(err);
+    },
   });
+  wx.getLocation({
+    success: (res) => {
+      console.log(res);
+    },
+    fail: (err) => {
+      console.log(err);
+    },
+  });
+  // AMap.plugin("AMap.Geolocation", function () {
+  //   const geolocation = new AMap.Geolocation({
+  //     enableHighAccuracy: true, // 是否使用高精度定位，默认：true
+  //     timeout: 10000, // 设置定位超时时间，默认：无穷大
+  //     offset: [10, 20], // 定位按钮的停靠位置的偏移量
+  //     zoomToAccuracy: true, //  定位成功后调整地图视野范围使定位位置及精度范围视野内可见，默认：false
+  //     position: "RB", //  定位按钮的排放位置,  RB表示右下
+  //   });
+
+  //   geolocation.getCurrentPosition(function (status, result) {
+  //     if (status == "complete") {
+  //       console.log("定位成功", result);
+  //       map.setCenter([result.position.lng, result.position.lat]);
+  //       getPOIByLocation([result.position.lng, result.position.lat]);
+  //     } else {
+  //       console.log("定位失败", result);
+  //     }
+  //   });
+  // });
 };
 
 // 处理地图移动结束事件
@@ -605,47 +646,6 @@ const goToSearch = () => {
   // });
 };
 
-// 路径规划
-const planRoute = () => {
-  if (!startPoint.value || !endPoint.value) return;
-
-  AMap.plugin("AMap.Driving", () => {
-    const driving = new AMap.Driving({
-      map: AMap,
-      panel: false,
-    });
-
-    // 清除之前的路线
-    AMap.clearMap();
-
-    // 添加起点和终点标记
-    const startMarker = new AMap.Marker({
-      position: [startPoint.value.lng, startPoint.value.lat],
-      icon: StratIcon,
-      map: AMap,
-    });
-
-    const endMarker = new AMap.Marker({
-      position: [endPoint.value.lng, endPoint.value.lat],
-      icon: EndIcon,
-      map: AMap,
-    });
-
-    // 规划路线
-    driving.search(
-      [startPoint.value.lng, startPoint.value.lat],
-      [endPoint.value.lng, endPoint.value.lat],
-      (status, result) => {
-        if (status === "complete") {
-          emit("route-planned", result);
-        } else {
-          console.error("路径规划失败");
-        }
-      }
-    );
-  });
-};
-
 const route = useRoute();
 onMounted(() => {
   initMap(route.query);
@@ -656,7 +656,8 @@ onMounted(() => {
 #amap-wrap {
   position: relative;
   width: 100%;
-  height: 13.93rem; /* 195/14 ≈ 13.93 */
+  height: 100%;
+  min-height: 13.93rem; /* 195/14 ≈ 13.93 */
   :deep(.amap-logo),
   :deep(.amap-copyright) {
     display: none !important;
@@ -756,5 +757,21 @@ onMounted(() => {
 
 .address-actions button:hover {
   background: #40a9ff;
+}
+.location-icon {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  padding: 8px;
+  border-radius: 6px;
+  z-index: 1;
+  img {
+    width: 16px;
+    height: 16px;
+  }
 }
 </style>

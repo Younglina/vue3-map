@@ -3,6 +3,7 @@ import AMapLoader from "@amap/amap-jsapi-loader";
 import moment from "moment";
 import { ref, onMounted, reactive, watch } from "vue";
 import { useRoute } from "vue-router";
+import { generateDateArray } from "@/utils/utils";
 import request from "@/utils/request";
 import taxiIcon from "@/assets/taxi.png";
 import haixiaIcon from "@/assets/haixia.png";
@@ -17,15 +18,47 @@ window._AMapSecurityConfig = {
   securityJsCode: "9537a21ee34efb281c3fe92b4f1055bf",
 };
 
-const useDateTypes = ["现在", "预约", "日租", "半日租"];
-const currentDateType = ref(0);
-const changeDateType = (v) => {
+const useDateTypes = [
+  { value: "1", label: "现在" },
+  { value: "2", label: "预约" },
+  { value: "4", label: "日租" },
+  { value: "5", label: "半日租" },
+];
+const currentDateType = ref("1");
+const useCarTime = ref(["现在出发"]);
+const showDatePicker = ref(false);
+const dateColumns = generateDateArray();
+const selectedDate = ref([]);
+const columns = [
+  dateColumns.dateArray,
+  dateColumns.hourArray,
+  dateColumns.minuteArray,
+];
+function changeDateType(v, dates) {
   currentDateType.value = v;
+  console.log(dates);
+  let date = dates || new Date().getTime();
+  if (v === "1" || v === "2") {
+    useCarTime.value[0] = [moment(date).format("MM-DD HH:mm")];
+  }
+  if (v === "4") {
+    useCarTime.value[0] = moment(date).format("MM-DD HH:mm");
+    useCarTime.value[1] = moment(date + 86400000).format("MM-DD HH:mm");
+  }
+  if (v === "5") {
+    useCarTime.value[0] = moment(date).format("MM-DD HH:mm");
+    useCarTime.value[1] = moment(date + 43200000).format("MM-DD HH:mm");
+  }
+}
+const onDateConfirm = (value) => {
+  const v = value.selectedValues;
+  changeDateType(currentDateType.value, new Date(`${v[0]} ${v[1]}:${v[2]}:00`));
 };
 
-const handleSelectPassenger = (type) => {
+const useCarReason = ref("");
+const toReason = () => {
   wx.miniProgram.navigateTo({
-    url: `/pages/chooseArea/addPerson?type=${type}`,
+    url: `/pages/chooseArea/caruseCause?useCarReason=${useCarReason.value}`,
   });
 };
 
@@ -312,7 +345,11 @@ const getBusinessList = () => {
   // });
 };
 
+const markerInfo = reactive({});
 const initMap = async () => {
+  if (route.query.flng && route.query.flat) {
+    Object.assign(markerInfo, route.query);
+  }
   // 初始化地图
   AMap = await AMapLoader.load({
     key: "0f20018974e4ab2189ad2d9f8b0a5702",
@@ -323,13 +360,12 @@ const initMap = async () => {
   // 创建地图实例
   map = new AMap.Map(mapContainer.value, {
     zoom: 17,
-    center: [route.query.flng, route.query.flat],
+    center: [markerInfo.flng, markerInfo.flat],
   });
-  console.log(route.query);
 
   // 创建起点和终点标记
   const startMarker = new AMap.Marker({
-    position: [route.query.flng, route.query.flat],
+    position: [markerInfo.flng, markerInfo.flat],
     icon: new AMap.Icon({
       size: new AMap.Size(25, 34),
       image: "@/assets/startIcon.png",
@@ -339,7 +375,7 @@ const initMap = async () => {
   });
 
   const endMarker = new AMap.Marker({
-    position: [route.query.tlng, route.query.tlat],
+    position: [markerInfo.tlng, markerInfo.tlat],
     icon: new AMap.Icon({
       size: new AMap.Size(25, 34),
       image: "@/assets/endIcon.png",
@@ -350,13 +386,13 @@ const initMap = async () => {
 
   // 创建文本标记
   const startText = new AMap.Text({
-    text: `<div style="display:flex;align-items:center"><div style="font-size:0.86rem;max-width: 76px;white-space: pre-wrap;">${route.query.fname}</div><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="#858b9c" d="M12.6 12L8 7.4L9.4 6l6 6l-6 6L8 16.6z"/></svg></div>`,
+    text: `<div style="display:flex;align-items:center;"><div style="font-size:0.86rem;width: 100px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;font-weight: 700">${markerInfo.fname}</div><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="#858b9c" d="M12.6 12L8 7.4L9.4 6l6 6l-6 6L8 16.6z"/></svg></div>`,
     anchor: "bottom-center",
-    position: [route.query.flng, route.query.flat],
+    position: [markerInfo.flng, markerInfo.flat],
     style: {
       padding: "5px 10px",
       "background-color": "#fff",
-      "border-radius": "5px",
+      "border-radius": "16px",
       "border-width": 0,
       "box-shadow": "0 2px 6px rgba(0,0,0,0.1)",
       color: "#333",
@@ -368,13 +404,13 @@ const initMap = async () => {
   });
 
   const endText = new AMap.Text({
-    text: `<div style="display:flex;align-items:center"><div style="font-size:0.86rem;max-width: 76px;white-space: pre-wrap;">${route.query.tname}</div><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="#858b9c" d="M12.6 12L8 7.4L9.4 6l6 6l-6 6L8 16.6z"/></svg></div>`,
+    text: `<div style="display:flex;align-items:center;"><div style="font-size:0.86rem;width: 100px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;font-weight: 700">${markerInfo.tname}</div><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="#858b9c" d="M12.6 12L8 7.4L9.4 6l6 6l-6 6L8 16.6z"/></svg></div>`,
     anchor: "bottom-center",
-    position: [route.query.tlng, route.query.tlat],
+    position: [markerInfo.tlng, markerInfo.tlat],
     style: {
       padding: "5px 10px",
       "background-color": "#fff",
-      "border-radius": "5px",
+      "border-radius": "16px",
       "border-width": 0,
       "box-shadow": "0 2px 6px rgba(0,0,0,0.1)",
       color: "#333",
@@ -396,15 +432,15 @@ const initMap = async () => {
 
   // 规划路线
   driving.search(
-    [route.query.flng, route.query.flat],
-    [route.query.tlng, route.query.tlat],
+    [markerInfo.flng, markerInfo.flat],
+    [markerInfo.tlng, markerInfo.tlat],
     (status, result) => {
       if (status === "complete") {
         // 调整地图视野以包含所有标记点和路线
         map.setFitView(
           [startMarker, endMarker, startText, endText],
           true,
-          [60, 60, 90, 90],
+          [90, 90, 90, 90],
           17
         );
       }
@@ -415,10 +451,22 @@ const initMap = async () => {
 
 const passengerInfo = reactive({
   name: "",
+  nameStr: "",
   phone: "",
-  companionList: [],
-  companionStr: "",
+  companionInfos: [],
 });
+
+const handleSelectPassenger = () => {
+  wx.miniProgram.navigateTo({
+    url: `/pages/chooseArea/addPerson?phone=${
+      passengerInfo.phone
+    }&name=${encodeURIComponent(
+      passengerInfo.name
+    )}&companionInfos=${encodeURIComponent(
+      JSON.stringify(passengerInfo.companionInfos)
+    )}`,
+  });
+};
 
 watch(
   () => route.params,
@@ -428,14 +476,17 @@ watch(
     if (query.phone && query.name) {
       passengerInfo.name = query.name;
       passengerInfo.phone = query.phone;
+      passengerInfo.nameStr = query.name;
     }
-    if (query.companionList) {
-      const companionList = JSON.parse(query.companionList || "[]");
-      passengerInfo.companionList = companionList;
-      passengerInfo.companionStr = companionList[0].companionName;
-      if (companionList.length > 1) {
-        passengerInfo.companionStr += `等`;
+    if (query.companionInfos) {
+      const companionInfos = JSON.parse(query.companionInfos || "[]");
+      passengerInfo.companionInfos = companionInfos;
+      if (companionInfos.length > 0) {
+        passengerInfo.nameStr += `等`;
       }
+    }
+    if (route.query.useCarReason) {
+      useCarReason.value = route.query.useCarReason;
     }
   },
   { deep: true, immediate: true }
@@ -453,50 +504,48 @@ const handleOrder = () => {
   // });
   console.log(route.query);
   const query = route.query;
+  localStorage.setItem(
+    "ZSX_ORDER_CONFIRM",
+    JSON.stringify({
+      businessType: "33",
+      orderType: "1",
+      endAddress: markerInfo.tname,
+      endLatitude: markerInfo.tlat,
+      endLngtitude: markerInfo.tlng,
+      endAddressFull: markerInfo.taddress,
+      startAddress: markerInfo.fname,
+      startLatitude: markerInfo.flat,
+      startLngtitude: markerInfo.flng,
+      startAddressFull: markerInfo.faddress,
+      passengerName: passengerInfo.name,
+      passengerPhone: passengerInfo.phone,
+      useCarReason: useCarReason.value,
+      companionInfos: passengerInfo.companionInfos,
+    })
+  );
+  wx.miniProgram.navigateTo({
+    url: `/pages/transfer/index?page=ZSX_ORDER_CONFIRM`,
+  });
+
   // request({
-  //   url: "/app/common/order/add",
+  //   url: "/app/common/order/page",
   //   method: "POST",
   //   headers: {
   //     Authorization: query.token,
   //   },
   //   data: {
-  //     businessType: "33",
-  //     endAddress: query.tname,
-  //     endLatitude: query.tlat,
-  //     endLngtitude: query.tlng,
-  //     endAddressFull: query.taddress,
-  //     startAddress: query.fname,
-  //     startLatitude: query.flat,
-  //     startLngtitude: query.flng,
-  //     startAddressFull: query.faddress,
-  //     orderType: "1",
-  //     passengerName: query.name,
-  //     passengerPhone: query.phone,
+  //     orderState: 0,
+  //     pageNum: 1,
+  //     pageSize: 10,
   //   },
   // }).then((res) => {
-  //   console.log(res);
+  //   console.log("orderPage: ", res);
   // });
-
-  request({
-    url: "/app/common/order/page",
-    method: "POST",
-    headers: {
-      Authorization: query.token,
-    },
-    data: {
-      orderState: 0,
-      pageNum: 1,
-      pageSize: 10,
-    },
-  }).then((res) => {
-    console.log("orderPage: ", res);
-  });
 };
-
-const mountedData = ref("");
+// const mountedData = ref("");
 onMounted(() => {
   initMap();
-  mountedData.value = new Date();
+  // mountedData.value = new Date();
 });
 </script>
 
@@ -506,12 +555,12 @@ onMounted(() => {
     <div class="car-list">
       <div class="date-type-wrap">
         <span
-          v-for="(item, idx) in useDateTypes"
+          v-for="item in useDateTypes"
           class="date-type"
           :key="item"
-          :class="{ active: idx === currentDateType }"
-          @click="changeDateType(idx)"
-          >{{ item }}</span
+          :class="{ active: item.value === currentDateType }"
+          @click="changeDateType(item.value)"
+          >{{ item.label }}</span
         >
       </div>
       <div v-for="item in carList" :key="item.businessType" class="car-item">
@@ -545,34 +594,26 @@ onMounted(() => {
         </div>
       </div>
       <div class="options">
-        <div class="item">
-          <img src="@/assets/clock.png" alt="" />
-          <span class="title">现在出发</span>
+        <div class="item" @click="showDatePicker = true">
+          <span class="title">{{ useCarTime.join(" ~ ") || "现在出发" }}</span>
           <img class="right-icon" src="@/assets/right.png" alt="" />
         </div>
-        <div class="divider"></div>
-        <div class="item" @click="handleSelectPassenger('passenger')">
-          <img src="@/assets/clock.png" alt="" />
+        <div class="item text-right" @click="handleSelectPassenger">
           <span class="title">{{
-            passengerInfo.name ? passengerInfo.name : "选择乘车人"
+            passengerInfo.nameStr || "乘车人/同行人"
           }}</span>
           <img class="right-icon" src="@/assets/right.png" alt="" />
         </div>
       </div>
       <div class="options">
-        <div class="item" @click="handleSelectPassenger('companion')">
-          <img src="@/assets/companion.png" alt="" />
+        <div class="item" @click="toReason('reason')">
           <span class="title">
-            {{ passengerInfo.companionStr || "选择同行人" }}
+            {{ useCarReason || "用车事由" }}
           </span>
           <img class="right-icon" src="@/assets/right.png" alt="" />
         </div>
-        <div class="divider"></div>
-        <div class="item">
-          <img src="@/assets/useRes.png" alt="" />
-          <span class="title">{{
-            passengerInfo.name ? passengerInfo.name : "用车事由"
-          }}</span>
+        <div class="item text-right" @click="toAddApproach">
+          <span class="title">添加途径点</span>
           <img class="right-icon" src="@/assets/right.png" alt="" />
         </div>
       </div>
@@ -583,6 +624,20 @@ onMounted(() => {
         </div>
         <div class="bottom-btn" @click="handleOrder">下一步</div>
       </div>
+
+      <van-popup
+        v-model:show="showDatePicker"
+        position="bottom"
+        :style="{ height: '30%' }"
+      >
+        <van-picker
+          v-model="selectedDate"
+          title="标题"
+          :columns="columns"
+          @confirm="onDateConfirm"
+          @cancel="showDatePicker = false"
+        />
+      </van-popup>
     </div>
   </div>
 </template>
@@ -697,22 +752,24 @@ onMounted(() => {
     padding: 12px;
     font-weight: 700;
     color: #41485d;
-    font-size: 14px;
     border-bottom: 1px solid #f5f7fb;
-    .divider {
-      width: 1px;
-      height: 100%;
-      background-color: #f5f7fb;
-    }
+    // .divider {
+    //   width: 1px;
+    //   height: 100%;
+    //   background-color: #f5f7fb;
+    // }
     .title {
-      min-width: 70px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      font-size: 0.86rem;
     }
     .item {
       display: flex;
       align-items: center;
       color: #41485d;
       font-size: 14px;
-      min-width: 40%;
+      flex: 1;
       img {
         width: 12px;
         height: 12px;
@@ -721,7 +778,11 @@ onMounted(() => {
       .right-icon {
         width: 24px;
         height: 24px;
+        margin-right: 0px;
       }
+    }
+    .text-right {
+      justify-content: flex-end;
     }
   }
   .btns {

@@ -5,7 +5,6 @@ import { onMounted, reactive, ref } from "vue";
 import { useRoute } from "vue-router";
 
 const currentCity = ref("");
-const currentType = ref("firm");
 const mapData = reactive({
   currentAreaName: "",
   address: "",
@@ -69,9 +68,16 @@ function setArea(data) {
   }
 }
 
+const currentCarType = ref("firm");
+const setCarType = (type) => {
+  currentCarType.value = type;
+  window.localStorage.setItem("CAR_TYPE", type);
+};
+
 const route = useRoute();
 onMounted(() => {
   currentCity.value = localStorage.getItem("CURRENT_CITY") || "";
+  window.localStorage.setItem("ZSX_WX_TOKEN", route.query.token);
   // request({
   //   url: "/v1/common/miscellaneous/weather",
   // }).then((res) => {
@@ -82,39 +88,28 @@ onMounted(() => {
 <template>
   <div class="home">
     <div class="map-wrap">
-      <div class="car-type">
-        <div>
-          <div
-            :class="currentType === 'firm' ? 'car-wrap current' : 'car-wrap'"
-            @click="currentType = 'firm'"
-          >
-            <img src="@/assets/firm.png" alt="" />
-          </div>
-          <div>企业用车</div>
-        </div>
-        <div>
-          <div
-            :class="currentType === 'person' ? 'car-wrap current' : 'car-wrap'"
-            @click="currentType = 'person'"
-          >
-            <img src="@/assets/person.png" alt="" />
-          </div>
-          <div>个人用车</div>
-        </div>
-      </div>
       <a-map
         class="map-dom"
         @loaded="mapLoaded"
         @location-info="handleLocationInfo"
       ></a-map>
       <div class="current-city">{{ currentCity }}</div>
+      <div class="car-type">
+        <div
+          :class="currentCarType === 'firm' ? 'active' : ''"
+          @click="setCarType('firm')"
+        >
+          企业用车
+        </div>
+        <div
+          :class="currentCarType === 'person' ? 'active' : ''"
+          @click="setCarType('person')"
+        >
+          个人用车
+        </div>
+      </div>
     </div>
     <div class="area-wrap">
-      <div class="ticket-wrap">
-        <img src="@/assets/ticket.png" alt="" />
-        <span>新用户送福利券</span>
-        <div class="btn">查看</div>
-      </div>
       <div class="area-list">
         <div class="from-area" @click="handleNavigator('from')">
           <div>您将在</div>
@@ -136,8 +131,6 @@ onMounted(() => {
           </div>
         </div>
       </div>
-      <img src="@/assets/banner1.png" class="banner" alt="" />
-      <img src="@/assets/banner2.png" class="banner" alt="" />
     </div>
   </div>
 </template>
@@ -151,9 +144,8 @@ onMounted(() => {
 .map-wrap {
   display: flex;
   flex-direction: column;
-  padding: 0 12px;
   position: relative;
-  background: linear-gradient(180deg, #1168e2 0%, #92c0ff 50.2%, #f4f5f7 100%);
+  flex: 1;
 }
 
 .current-city {
@@ -165,74 +157,28 @@ onMounted(() => {
 }
 
 .car-type {
-  display: flex;
-  justify-content: space-around;
+  position: absolute;
+  bottom: 0;
+  left: 0;
   color: #ffffff;
-  padding: 42px 16px 16px;
-  > div {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .car-wrap {
-    width: 48px;
-    height: 48px;
-    background: #ffffff;
-    border-radius: 50px;
-    padding: 14px 12px;
-    opacity: 0.3;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 4px;
-    img {
-      width: 100%;
-      height: 100%;
-    }
-  }
-  .current {
-    opacity: 1;
-  }
-}
-
-.map-dom {
-  border-radius: 20px 20px 0px 0px;
-  overflow: hidden;
-}
-
-.ticket-wrap {
-  padding-bottom: 12px;
-  color: #ff7d1a;
   display: flex;
-  align-items: center;
-  img {
-    width: 16px;
-    height: 16px;
-    margin-right: 4px;
-  }
-  span {
-    font-weight: 700;
+  div {
+    background: #858b9c;
+    border-radius: 10px 10px 0 0;
+    padding: 6px 14px;
     font-size: 12px;
+    text-align: center;
   }
-  .btn {
-    border: 1px solid #ff7d1a;
-    border-radius: 50px;
-    margin-left: auto;
-    padding: 4px 14px;
-    font-weight: 900;
-    font-size: 12px;
+  .active {
+    background: #1985fb;
+    color: #ffffff;
   }
 }
-
 .area-wrap {
   height: 15rem;
   background: linear-gradient(180deg, #ffe9dc 0%, #fef4ef 14.64%, #f5f7fb 100%);
   border-radius: 20px;
   padding: 12px;
-  .banner {
-    width: 100%;
-    margin-top: 8px;
-  }
 }
 .from-area,
 .to-area {
@@ -295,7 +241,7 @@ onMounted(() => {
   > div {
     padding: 8px 10px;
     background: #f2f5fa;
-    border-radius: 10px;
+    border-radius: 8px;
     color: #858b9c;
     font-size: 12px;
   }

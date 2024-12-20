@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory } from "vue-router";
 import AMap from "../components/AMap.vue";
 import Home from "../views/home.vue";
 import SearchPage from "../components/SearchPage.vue";
+import Transfer from "../views/transfer.vue";
 import Trajectory from "../views/trajectory.vue";
 
 const routes = [
@@ -27,6 +28,14 @@ const routes = [
     component: Trajectory,
     meta: {
       title: "车型选择",
+    },
+  },
+  {
+    path: "/transfer",
+    name: "Transfer",
+    component: Transfer,
+    meta: {
+      title: "加载中",
     },
   },
 ];
