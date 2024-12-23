@@ -26,6 +26,7 @@ const useDateTypes = [
 ];
 const currentDateType = ref("1");
 const useCarTime = ref(["现在出发"]);
+const useCarTimeStr = ref("");
 const showDatePicker = ref(false);
 const dateColumns = generateDateArray();
 const selectedDate = ref([]);
@@ -36,7 +37,6 @@ const columns = [
 ];
 function changeDateType(v, dates) {
   currentDateType.value = v;
-  console.log(dates);
   let date = dates || new Date().getTime();
   if (v === "1" || v === "2") {
     useCarTime.value[0] = [moment(date).format("MM-DD HH:mm")];
@@ -52,7 +52,14 @@ function changeDateType(v, dates) {
 }
 const onDateConfirm = (value) => {
   const v = value.selectedValues;
-  changeDateType(currentDateType.value, new Date(`${v[0]} ${v[1]}:${v[2]}:00`));
+  changeDateType(
+    currentDateType.value,
+    new Date(`${v[0]} ${v[1]}:${v[2]}:00`).getTime()
+  );
+  useCarTimeStr.value = moment(`${v[0]} ${v[1]}:${v[2]}:00`).format(
+    "YYYY-MM-DD HH:mm:ss"
+  );
+  showDatePicker.value = false;
 };
 
 const useCarReason = ref("");
@@ -507,8 +514,11 @@ const handleOrder = () => {
   localStorage.setItem(
     "ZSX_ORDER_CONFIRM",
     JSON.stringify({
-      businessType: "33",
-      orderType: "1",
+      businessType: carList.value
+        .filter((item) => item.defaultChooseState === "1")
+        .map((item) => item.businessType)
+        .join(","),
+      orderType: useDateTypes.value,
       endAddress: markerInfo.tname,
       endLatitude: markerInfo.tlat,
       endLngtitude: markerInfo.tlng,
@@ -521,6 +531,9 @@ const handleOrder = () => {
       passengerPhone: passengerInfo.phone,
       useCarReason: useCarReason.value,
       companionInfos: passengerInfo.companionInfos,
+      togetherOrder: ~~passengerInfo.companionInfos.length > 0,
+      rentDuration: useDateTypes.value === "4" ? "24" : "12",
+      useCarTime: useCarTimeStr.value || moment().format("YYYY-MM-DD HH:mm:ss"),
     })
   );
   wx.miniProgram.navigateTo({

@@ -1,7 +1,7 @@
 <template>
   <div class="amap-wrap" id="amap-wrap">
     <div id="map-container" class="map"></div>
-    <div class="center-marker">
+    <div v-if="showCenterMarker" class="center-marker">
       <div class="text" @click="goToSearch">{{ currentAddress.name }}</div>
       <div class="line"></div>
       <div class="marker">
@@ -9,7 +9,11 @@
         <div class="marker-point"></div>
       </div>
     </div>
-    <div class="location-icon" @click="getCurrentLocation">
+    <div
+      v-if="showLocationIcon"
+      class="location-icon"
+      @click="getCurrentLocation"
+    >
       <img src="@/assets/location.png" mode="widthFix" />
     </div>
   </div>
@@ -25,12 +29,23 @@ import { useRoute } from "vue-router";
 
 const props = defineProps({
   center: {
-    type: Array,
-    default: () => [116.397428, 39.90923],
+    type: Object,
+    default: () => ({
+      longitude: 116.397428,
+      latitude: 39.90923,
+    }),
   },
   zoom: {
     type: Number,
     default: 13,
+  },
+  showCenterMarker: {
+    type: Boolean,
+    default: true,
+  },
+  showLocationIcon: {
+    type: Boolean,
+    default: true,
   },
 });
 
@@ -648,7 +663,7 @@ const goToSearch = () => {
 
 const route = useRoute();
 onMounted(() => {
-  initMap(route.query);
+  initMap(route.query.latitude ? route.query : props.center);
 });
 </script>
 
@@ -667,6 +682,7 @@ onMounted(() => {
 .map {
   width: 100%;
   height: 100%;
+  min-height: 13.93rem;
 }
 
 .center-marker {

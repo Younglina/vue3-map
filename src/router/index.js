@@ -4,6 +4,7 @@ import Home from "../views/home.vue";
 import SearchPage from "../components/SearchPage.vue";
 import Transfer from "../views/transfer.vue";
 import Trajectory from "../views/trajectory.vue";
+import OrderDetail from "../views/orderDetail.vue";
 
 const routes = [
   {
@@ -36,6 +37,14 @@ const routes = [
     component: Transfer,
     meta: {
       title: "加载中",
+    },
+  },
+  {
+    path: "/orderDetail",
+    name: "OrderDetail",
+    component: OrderDetail,
+    meta: {
+      title: "订单详情",
     },
   },
 ];
