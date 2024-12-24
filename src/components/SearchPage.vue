@@ -19,7 +19,10 @@ onMounted(() => {
     AMap = Map;
     // getPOIByLocation([route.query.longitude, route.query.latitude]);
   });
-  currentCity.value = route.query.city;
+  currentCity.value =
+    route.query.city && route.query.city !== "undefined"
+      ? route.query.city
+      : localStorage.getItem("CURRENT_CITY");
 });
 
 const inputValue = ref("");
@@ -31,18 +34,23 @@ const getPOIByKeyword = (keyword) => {
     });
     placeSearch.search(keyword, (status, result) => {
       if (status === "complete" && result.info === "OK") {
-        const p1 = [route.query.longitude, route.query.latitude];
+        let p1;
+        if (route.query.longitude && route.query.latitude) {
+          p1 = [route.query.longitude, route.query.latitude];
+        }
         searchPOIList.value = result.poiList.pois.slice(0, 12).map((item) => {
-          item.distance = AMap.GeometryUtil.distance(p1, [
-            item.location.lng,
-            item.location.lat,
-          ]);
+          if (p1) {
+            item.distance = AMap.GeometryUtil.distance(p1, [
+              item.location.lng,
+              item.location.lat,
+            ]);
+            item.unit = item.distance > 1000 ? "km" : "m";
+            item.distance =
+              item.distance > 1000
+                ? (item.distance / 1000).toFixed(1)
+                : (+item.distance).toFixed(1);
+          }
           item.location = `${item.location.lng},${item.location.lat}`;
-          item.unit = item.distance > 1000 ? "km" : "m";
-          item.distance =
-            item.distance > 1000
-              ? (item.distance / 1000).toFixed(1)
-              : (+item.distance).toFixed(1);
           return item;
         });
       }
@@ -312,7 +320,10 @@ const pois = ref([]);
 const router = useRouter();
 const handleSelectPOI = (item) => {
   console.log(item, route.query);
-  const [longitude, latitude] = item.location.split(",");
+  let longitude, latitude;
+  if (item.location) {
+    [longitude, latitude] = item.location.split(",");
+  }
   if (route.query.type === "from") {
     router.push({
       path: "/home",
@@ -337,6 +348,16 @@ const handleSelectPOI = (item) => {
       )}&tlng=${longitude}&tlat=${latitude}&tname=${encodeURIComponent(
         item.name
       )}&taddress=${encodeURIComponent(item.address)}`,
+    });
+  }
+
+  if (route.query.type === "addPoint") {
+    wx.miniProgram.redirectTo({
+      url: `/pages/trajectory/addPoint?name=${encodeURIComponent(
+        item.name
+      )}&address=${encodeURIComponent(item.address)}&location=${
+        item.location
+      }&idx=${route.query.idx}`,
     });
   }
 };
@@ -391,7 +412,10 @@ const handleSelectPOI = (item) => {
         <div class="poi-info">
           <div class="poi-name">{{ item.name }}</div>
           <div class="poi-address">
-            {{ item.distance }}{{ item.unit }} | {{ item.address }}
+            <span v-if="item.distance"
+              >{{ item.distance }}{{ item.unit }} |
+            </span>
+            {{ item.address }}
           </div>
         </div>
       </div>

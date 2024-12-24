@@ -4,12 +4,14 @@ const route = useRoute();
 const page = route.query.page;
 let url = "";
 let data = "";
-if (page === "ZSX_ORDER_CONFIRM") {
-  url = "/pages/chooseArea/orderConfirm";
-  data = JSON.parse(
-    localStorage.getItem("ZSX_ORDER_CONFIRM") || "{_NODATA: true}"
-  );
-  data._ZSX_PAGE_KEY = "ZSX_ORDER_CONFIRM";
+switch (page) {
+  case "ZSX_ORDER_CONFIRM":
+    url = "/pages/chooseArea/orderConfirm";
+    data = JSON.parse(
+      localStorage.getItem("ZSX_ORDER_CONFIRM") || '{"_NODATA": true}'
+    );
+    data._ZSX_PAGE_KEY = "ZSX_ORDER_CONFIRM";
+    break;
 }
 if (url) {
   wx.miniProgram.redirectTo({ url: url });

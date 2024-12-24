@@ -1,5 +1,6 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
+import { ORDER_STATUS } from "../utils/constant";
 import moment from "moment";
 import { useRoute } from "vue-router";
 import request from "@/utils/request";
@@ -12,92 +13,116 @@ const mapLoaded = (m) => {
 
 const orderDetail = ref(null);
 function getOrderDetail(orderNo) {
-  // request({
-  //   url: "/app/common/order/get",
-  //   method: "POST",
-  //   headers: {
-  //     Authorization: route.query.token,
-  //   },
-  //   data: {
-  //     orderNo,
-  //   },
-  // }).then((res) => {
-  const res = {
-    orderNo: "2024122300020510001535,2024122300023310000451",
-    passengerId: "1844637171561308161",
-    orderTime: "2024-12-23 05:36:58",
-    orderState: "101",
-    orderStateStr: null,
-    orderSource: null,
-    orderAmount: null,
-    businessType: "5,33",
-    arrangedTips: null,
-    order: {
-      logId: "1871067455328141313",
-      passengerId: "1844637171561308161",
-      orderPersonPhone: "15179816883",
-      orderPersonDeptName: null,
-      orderPersonOrgName: null,
-      orderPersonName: "6883",
-      passengerPhone: "15179811111",
-      passengerName: "1111",
-      orderTime: "2024-12-23 05:36:58",
-      orderState: "101",
-      useCarTime: "2024-12-23 13:36:50",
-      useCarReason: "送领文件",
-      orderType: "1",
-      rentDuration: "12",
-      dispatchType: "0",
-      placeOrderType: "2",
-      startLngtitude: 120.211784,
-      startLatitude: 30.208879,
-      startAddress: "高新区(滨江)公安分局",
-      startAddressFull: "",
-      endLngtitude: 120.223401,
-      endLatitude: 30.220748,
-      endAddress: "印月尚庭(西北门)",
-      endAddressFull: "丹枫路86号印月尚庭",
-      approvalNo: null,
-      togetherOrder: "0",
+  let interval = setInterval(() => {
+    // request({
+    //   url: "/app/common/order/get",
+    //   method: "POST",
+    //   headers: {
+    //     Authorization: route.query.token,
+    //   },
+    //   data: {
+    //     orderNo,
+    //   },
+    // }).then((res) => {
+    const res = {
       orderNo: "2024122300020510001535,2024122300023310000451",
+      passengerId: "1844637171561308161",
+      orderTime: "2024-12-23 05:36:58",
+      orderState: "1",
+      orderStateStr: null,
+      orderSource: null,
+      orderAmount: null,
       businessType: "5,33",
-      chooseBusinessType: "5,33",
-      businessId: "2024122313370502406",
-      cancelType: "2",
-      cancelDesc: "系统取消",
-      cancelTime: "2024-12-23 05:57:05",
-      createUserId: "1844637172337127425",
-      orgId: "1",
-      orgName: null,
-      orderSource: "2",
-      dispatchSource: "5,33",
-      driverId: null,
-      vehicleId: null,
-      togetherList: null,
-    },
-  };
-  console.log(res);
-  orderDetail.value = res;
-  // });
+      arrangedTips: null,
+      order: {
+        logId: "1871067455328141313",
+        passengerId: "1844637171561308161",
+        orderPersonPhone: "15179816883",
+        orderPersonDeptName: null,
+        orderPersonOrgName: null,
+        orderPersonName: "6883",
+        passengerPhone: "15179811111",
+        passengerName: "1111",
+        orderTime: "2024-12-23 05:36:58",
+        orderState: "101",
+        useCarTime: "2024-12-23 13:36:50",
+        useCarReason: "送领文件",
+        orderType: "1",
+        rentDuration: "12",
+        dispatchType: "0",
+        placeOrderType: "2",
+        startLngtitude: 120.211784,
+        startLatitude: 30.208879,
+        startAddress: "高新区(滨江)公安分局",
+        startAddressFull: "",
+        endLngtitude: 120.223401,
+        endLatitude: 30.220748,
+        endAddress: "印月尚庭(西北门)",
+        endAddressFull: "丹枫路86号印月尚庭",
+        approvalNo: null,
+        togetherOrder: "0",
+        orderNo: "2024122300020510001535,2024122300023310000451",
+        businessType: "5,33",
+        chooseBusinessType: "5,33",
+        businessId: "2024122313370502406",
+        cancelType: "2",
+        cancelDesc: "系统取消",
+        cancelTime: "2024-12-23 05:57:05",
+        createUserId: "1844637172337127425",
+        orgId: "1",
+        orgName: null,
+        orderSource: "2",
+        dispatchSource: "5,33",
+        driverId: null,
+        vehicleId: null,
+        togetherList: null,
+      },
+    };
+    console.log(res);
+    orderDetail.value = res;
+    if (
+      orderDetail.value &&
+      ["100", "101", "102"].includes(orderDetail.value.orderState)
+    ) {
+      console.log("clear");
+      clearInterval(interval);
+      interval = null;
+    }
+    // });
+  }, 1000);
 }
+
+const showStateInfo = computed(() => {
+  const s = ORDER_STATUS[orderDetail.value.orderState];
+  if (s) {
+    return {
+      text: s.text,
+      subtext: orderDetail.value.order.cancelDesc || s.subtext("曹操出行"),
+    };
+  }
+  return {
+    text: orderDetail.value.orderStateStr || ORDER_STATUS[-1].text,
+    subtext: ORDER_STATUS[-1].subtext(),
+  };
+});
 
 const route = useRoute();
 onMounted(() => {
   console.log(route.query);
   getOrderDetail(route.query.orderNo);
-  request({
-    url: "/app/hailing/order/path/planning/info",
-    method: "POST",
-    headers: {
-      Authorization: route.query.token,
-    },
-    data: {
-      phone: "15179816883",
-      orderNo: route.query.orderNo,
-    },
-  }).then((res) => {
-    console.log(res);
-  });
+  // request({
+  //   url: "/app/hailing/order/path/planning/info",
+  //   method: "POST",
+  //   headers: {
+  //     Authorization: route.query.token,
+  //   },
+  //   data: {
+  //     phone: "15179816883",
+  //     orderNo: route.query.orderNo,
+  //   },
+  // }).then((res) => {
+  //   console.log(res);
+  // });
   // request({
   //   url: "/app/common/order/underway",
   //   method: "POST",
@@ -184,12 +209,17 @@ onMounted(() => {
     <div class="state-wrap">
       <div class="state-info-wrap">
         <div class="state-info">
-          <div class="title">{{ orderDetail.orderStateStr }}</div>
-          <div class="info">用车中</div>
+          <div class="title">{{ showStateInfo.text }}</div>
+          <div class="info">{{ showStateInfo.subtext }}</div>
         </div>
         <img src="@/assets/haixia.png" alt="" />
       </div>
-      <div class="car-info-wrap">
+      <div
+        class="car-info-wrap"
+        v-if="
+          ['0', '2', '3', '4', '5', '6', '100'].includes(orderDetail.orderState)
+        "
+      >
         <div>
           <div class="car-type-info">
             <span class="car-type">经济型</span>
@@ -206,8 +236,22 @@ onMounted(() => {
           <span>打电话</span>
         </div>
       </div>
+      <div class="paidan-wrap" v-if="orderDetail.orderState == '1'">
+        <div>
+          <div>
+            正在同时呼叫{{ orderDetail.businessType.split(",").length }}个车型
+          </div>
+          <div>经济型1</div>
+        </div>
+        <div class="div-btn">取消订单</div>
+      </div>
     </div>
-    <div class="order-btns">
+    <div
+      v-if="
+        ['0', '2', '3', '4', '5', '6', '100'].includes(orderDetail.orderState)
+      "
+      class="order-btns"
+    >
       <div class="action-btn" @click="cancelOrder">
         <img src="@/assets/close.svg" alt="" />
         <span>取消订单</span>
@@ -374,7 +418,11 @@ onMounted(() => {
 }
 
 .state-wrap {
-  background-image: linear-gradient(180deg, #3475f5 0%, #ffffff 100%);
+  background-image: linear-gradient(
+    180deg,
+    #3475f5 0%,
+    rgba(52, 117, 245, 0.01) 100%
+  );
   display: flex;
   justify-content: space-between;
   flex-direction: column;
@@ -457,12 +505,26 @@ onMounted(() => {
     }
   }
 }
+.paidan-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.428rem;
+  border-radius: 12px;
+  background-color: #ffffff;
+  .div-btn {
+    padding: 6px 8px;
+    border-radius: 6px;
+    background-color: #ffffff;
+    border: 1px solid #f5f7fa;
+  }
+}
 .order-btns {
   display: flex;
   justify-content: space-between;
   padding: 1rem 1.428rem;
   border-radius: 0 0 12px 12px;
-  margin: 0 1rem 1rem 1rem;
+  margin: 0 1rem 0rem;
   background: #fff;
   gap: 8px;
 
@@ -483,6 +545,7 @@ onMounted(() => {
 
 .order-info {
   padding: 0 1rem;
+  margin-top: 1rem;
   img {
     width: 1.142rem;
     height: 1.142rem;

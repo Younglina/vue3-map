@@ -36,7 +36,25 @@ const handleLocationInfo = (info) => {
     latitude: info.latitude,
     address: info.address,
   };
+  getNearByCar();
 };
+
+function getNearByCar() {
+  request({
+    url: "/app/common/driver/v2/nearby",
+    method: "POST",
+    headers: {
+      Authorization: route.query.token,
+    },
+    data: {
+      businessType: "11",
+      startLatitude: mapData.latitude,
+      startLongitude: mapData.longitude,
+    },
+  }).then((res) => {
+    console.log(res);
+  });
+}
 
 const handleNavigator = (type) => {
   if (type === "from" || type === "to") {

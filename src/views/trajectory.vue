@@ -18,6 +18,7 @@ window._AMapSecurityConfig = {
   securityJsCode: "9537a21ee34efb281c3fe92b4f1055bf",
 };
 
+// 时间选择
 const useDateTypes = [
   { value: "1", label: "现在" },
   { value: "2", label: "预约" },
@@ -25,7 +26,7 @@ const useDateTypes = [
   { value: "5", label: "半日租" },
 ];
 const currentDateType = ref("1");
-const useCarTime = ref(["现在出发"]);
+const useCarTime = ref([]);
 const useCarTimeStr = ref("");
 const showDatePicker = ref(false);
 const dateColumns = generateDateArray();
@@ -38,7 +39,7 @@ const columns = [
 function changeDateType(v, dates) {
   currentDateType.value = v;
   let date = dates || new Date().getTime();
-  if (v === "1" || v === "2") {
+  if (v === "2") {
     useCarTime.value[0] = [moment(date).format("MM-DD HH:mm")];
   }
   if (v === "4") {
@@ -62,11 +63,24 @@ const onDateConfirm = (value) => {
   showDatePicker.value = false;
 };
 
+// 用车事由
 const useCarReason = ref("");
 const toReason = () => {
   wx.miniProgram.navigateTo({
     url: `/pages/chooseArea/caruseCause?useCarReason=${useCarReason.value}`,
   });
+};
+
+// 用车类型
+const currentCarType = ref("firm");
+const setCarType = (type) => {
+  currentCarType.value = window.localStorage.getItem("CAR_TYPE") || type;
+  if (type === "person") {
+    currentDateType.value = "2";
+    useCarTime.value = ["预约"];
+  } else {
+    currentDateType.value = "1";
+  }
 };
 
 const carList = ref([]);
@@ -437,12 +451,26 @@ const initMap = async () => {
     panel: false,
   });
 
+  // 途径点
+  const opts = {
+    waypoints: [],
+  };
+  if (route.query.pointList) {
+    const points = JSON.parse(route.query.pointList);
+    points.forEach((item) => {
+      const [lng, lat] = item.location.split(",");
+      opts.waypoints.push([lng, lat]);
+    });
+  }
+
   // 规划路线
   driving.search(
     [markerInfo.flng, markerInfo.flat],
     [markerInfo.tlng, markerInfo.tlat],
+    opts,
     (status, result) => {
       if (status === "complete") {
+        console.log(result);
         // 调整地图视野以包含所有标记点和路线
         map.setFitView(
           [startMarker, endMarker, startText, endText],
@@ -454,7 +482,25 @@ const initMap = async () => {
     }
   );
   getBusinessList();
+  getNearByCar();
 };
+
+function getNearByCar() {
+  request({
+    url: "/app/common/driver/v2/nearby",
+    method: "POST",
+    headers: {
+      Authorization: route.query.token,
+    },
+    data: {
+      businessType: "11",
+      startLatitude: markerInfo.flat,
+      startLongitude: markerInfo.flng,
+    },
+  }).then((res) => {
+    console.log(res);
+  });
+}
 
 const passengerInfo = reactive({
   name: "",
@@ -472,6 +518,27 @@ const handleSelectPassenger = () => {
     )}&companionInfos=${encodeURIComponent(
       JSON.stringify(passengerInfo.companionInfos)
     )}`,
+  });
+};
+
+const familyList = ref([]);
+const familyStr = ref("帮人叫车");
+const handleAddFamile = () => {
+  let url = `/pages/chooseArea/addFamily`;
+  if (familyList.value.length) {
+    url += `?familyList=${encodeURIComponent(
+      JSON.stringify(familyList.value)
+    )}`;
+  }
+  wx.miniProgram.navigateTo({
+    url: url,
+  });
+};
+
+const pointList = ref([]);
+const toAddPoint = () => {
+  wx.miniProgram.navigateTo({
+    url: `/pages/trajectory/addPoint`,
   });
 };
 
@@ -495,78 +562,105 @@ watch(
     if (route.query.useCarReason) {
       useCarReason.value = route.query.useCarReason;
     }
+    if (route.query.familyList) {
+      familyList.value = JSON.parse(route.query.familyList || "[]");
+      if (familyList.value.length > 0) {
+        familyStr.value = familyList.value[0].name;
+      } else {
+        familyStr.value = "帮人叫车";
+      }
+      if (familyList.value.length > 1) {
+        familyStr.value += `等`;
+      }
+    }
+    if (route.query.pointList) {
+      pointList.value = JSON.parse(decodeURIComponent(route.query.pointList));
+      initMap();
+    }
   },
   { deep: true, immediate: true }
 );
 
 const handleOrder = () => {
-  // request({
-  //   url: "/app/passenger/info/get",
-  //   method: "POST",
-  //   headers: {
-  //     Authorization: route.query.token,
-  //   },
-  // }).then((res) => {
-  //   console.log(res);
-  // });
-  console.log(route.query);
-  const query = route.query;
-  localStorage.setItem(
-    "ZSX_ORDER_CONFIRM",
-    JSON.stringify({
-      businessType: carList.value
-        .filter((item) => item.defaultChooseState === "1")
-        .map((item) => item.businessType)
-        .join(","),
-      orderType: useDateTypes.value,
-      endAddress: markerInfo.tname,
-      endLatitude: markerInfo.tlat,
-      endLngtitude: markerInfo.tlng,
-      endAddressFull: markerInfo.taddress,
-      startAddress: markerInfo.fname,
-      startLatitude: markerInfo.flat,
-      startLngtitude: markerInfo.flng,
-      startAddressFull: markerInfo.faddress,
-      passengerName: passengerInfo.name,
-      passengerPhone: passengerInfo.phone,
-      useCarReason: useCarReason.value,
-      companionInfos: passengerInfo.companionInfos,
-      togetherOrder: ~~passengerInfo.companionInfos.length > 0,
-      rentDuration: useDateTypes.value === "4" ? "24" : "12",
-      useCarTime: useCarTimeStr.value || moment().format("YYYY-MM-DD HH:mm:ss"),
-    })
-  );
+  if (currentCarType.value === "person") {
+    if (useCarTime.value[0] === "预约") {
+      showToast("请选择时间");
+      return;
+    }
+    if (familyList.value.length === 0) {
+      showToast("请输入乘车人");
+      return;
+    }
+  }
+  const orderData = {
+    businessType: currentCarType.value === "firm" ? "11" : "5",
+    orderType: currentDateType.value,
+    endAddress: markerInfo.tname,
+    endLatitude: markerInfo.tlat,
+    endLngtitude: markerInfo.tlng,
+    endAddressFull: markerInfo.taddress,
+    startAddress: markerInfo.fname,
+    startLatitude: markerInfo.flat,
+    startLngtitude: markerInfo.flng,
+    startAddressFull: markerInfo.faddress,
+    passengerName: passengerInfo.name,
+    passengerPhone: passengerInfo.phone,
+    useCarReason: useCarReason.value,
+    rentDuration: useDateTypes.value === "4" ? "24" : "12",
+    useCarTime: useCarTimeStr.value || moment().format("YYYY-MM-DD HH:mm:ss"),
+    planningPath: JSON.stringify(planningPath.value),
+  };
+  if (
+    passengerInfo.companionInfos.length &&
+    passengerInfo.companionInfos[0].companionPhone
+  ) {
+    orderData.companionInfos = passengerInfo.companionInfos;
+    orderData.togetherOrder = ~~passengerInfo.companionInfos.length > 0;
+  }
+  if (pointList.value.length) {
+    orderData.midwayList = pointList.value.map((item, idx) => {
+      return {
+        midwayAddress: item.address,
+        midwayLongitude: item.location.split(",")[0],
+        midwayLatitude: item.location.split(",")[1],
+        midwayIndex: idx + 1,
+      };
+    });
+  }
+  localStorage.setItem("ZSX_ORDER_CONFIRM", JSON.stringify(orderData));
   wx.miniProgram.navigateTo({
     url: `/pages/transfer/index?page=ZSX_ORDER_CONFIRM`,
   });
-
-  // request({
-  //   url: "/app/common/order/page",
-  //   method: "POST",
-  //   headers: {
-  //     Authorization: query.token,
-  //   },
-  //   data: {
-  //     orderState: 0,
-  //     pageNum: 1,
-  //     pageSize: 10,
-  //   },
-  // }).then((res) => {
-  //   console.log("orderPage: ", res);
-  // });
 };
 // const mountedData = ref("");
 onMounted(() => {
   initMap();
+  setCarType("firm");
   // mountedData.value = new Date();
 });
 </script>
 
 <template>
   <div class="trajectory-page">
-    <div class="map-container" id="trajectory-wrap" ref="mapContainer"></div>
+    <div class="map-wrap">
+      <div class="map-container" id="trajectory-wrap" ref="mapContainer"></div>
+      <div class="car-type">
+        <div
+          :class="currentCarType === 'firm' ? 'active' : ''"
+          @click="setCarType('firm')"
+        >
+          企业用车
+        </div>
+        <div
+          :class="currentCarType === 'person' ? 'active' : ''"
+          @click="setCarType('person')"
+        >
+          个人用车
+        </div>
+      </div>
+    </div>
     <div class="car-list">
-      <div class="date-type-wrap">
+      <div class="date-type-wrap" v-if="currentCarType === 'firm'">
         <span
           v-for="item in useDateTypes"
           class="date-type"
@@ -606,27 +700,46 @@ onMounted(() => {
           </div>
         </div>
       </div>
-      <div class="options">
-        <div class="item" @click="showDatePicker = true">
-          <span class="title">{{ useCarTime.join(" ~ ") || "现在出发" }}</span>
-          <img class="right-icon" src="@/assets/right.png" alt="" />
+      <div v-if="currentCarType === 'firm'">
+        <div class="options">
+          <div class="item" @click="showDatePicker = true">
+            <span class="title">{{
+              currentDateType == 1 ? "现在出发" : useCarTime.join(" ~ ")
+            }}</span>
+            <img
+              v-if="currentDateType != 1"
+              class="right-icon"
+              src="@/assets/right.png"
+              alt=""
+            />
+          </div>
+          <div class="item text-right" @click="handleSelectPassenger">
+            <span class="title">{{
+              passengerInfo.nameStr || "乘车人/同行人"
+            }}</span>
+            <img class="right-icon" src="@/assets/right.png" alt="" />
+          </div>
         </div>
-        <div class="item text-right" @click="handleSelectPassenger">
-          <span class="title">{{
-            passengerInfo.nameStr || "乘车人/同行人"
-          }}</span>
-          <img class="right-icon" src="@/assets/right.png" alt="" />
+        <div class="options">
+          <div class="item" @click="toReason('reason')">
+            <span class="title">
+              {{ useCarReason || "用车事由" }}
+            </span>
+            <img class="right-icon" src="@/assets/right.png" alt="" />
+          </div>
+          <div class="item text-right" @click="toAddPoint">
+            <span class="title">添加途径点</span>
+            <img class="right-icon" src="@/assets/right.png" alt="" />
+          </div>
         </div>
       </div>
-      <div class="options">
-        <div class="item" @click="toReason('reason')">
-          <span class="title">
-            {{ useCarReason || "用车事由" }}
-          </span>
+      <div v-else class="options">
+        <div class="item" @click="showDatePicker = true">
+          <span class="title">{{ useCarTime.join(" ~ ") }}</span>
           <img class="right-icon" src="@/assets/right.png" alt="" />
         </div>
-        <div class="item text-right" @click="toAddApproach">
-          <span class="title">添加途径点</span>
+        <div class="item text-right" @click="handleAddFamile">
+          <span class="title">{{ familyStr || "帮人叫车" }}</span>
           <img class="right-icon" src="@/assets/right.png" alt="" />
         </div>
       </div>
@@ -665,10 +778,33 @@ onMounted(() => {
   padding-bottom: 1.14rem;
 }
 
-.map-container {
+.map-wrap {
   width: 100%;
   height: 100%;
   flex: 1;
+  position: relative;
+  .car-type {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    color: #ffffff;
+    display: flex;
+    div {
+      background: #858b9c;
+      border-radius: 10px 10px 0 0;
+      padding: 6px 14px;
+      font-size: 12px;
+      text-align: center;
+    }
+    .active {
+      background: #1985fb;
+      color: #ffffff;
+    }
+  }
+}
+.map-container {
+  width: 100%;
+  height: 100%;
 }
 
 .date-type-wrap {
@@ -830,7 +966,7 @@ onMounted(() => {
 #trajectory-wrap {
   position: relative;
   width: 100%;
-  height: 13.93rem; /* 195/14 ≈ 13.93 */
+  min-height: 13.93rem; /* 195/14 ≈ 13.93 */
   :deep(.amap-logo),
   :deep(.amap-copyright) {
     display: none !important;
