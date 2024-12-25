@@ -463,6 +463,7 @@ const handleSelectPOI = (item) => {
 <style scoped lang="scss">
 .search-page {
   min-height: 100vh;
+  overflow-y: auto;
   background: #f5f7fb;
 }
 .search-wrap {
@@ -471,14 +472,13 @@ const handleSelectPOI = (item) => {
   border-radius: 0px 0px 20px 20px;
 }
 .search {
-  min-height: 3.57rem;
+  min-height: 50px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   .btn {
     font-weight: 700;
     color: #858b9c;
-    font-size: 14px;
   }
   .search-input {
     position: relative;
@@ -511,7 +511,7 @@ const handleSelectPOI = (item) => {
       padding: 0 4px;
       border: none;
       background: transparent;
-      min-height: 3.57rem;
+      min-height: 50px;
       outline: none;
       &::placeholder {
         font-weight: 700;

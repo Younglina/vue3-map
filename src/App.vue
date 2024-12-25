@@ -2,7 +2,7 @@
   <router-view></router-view>
 </template>
 
-<style>
+<style lang="scss">
 * {
   margin: 0;
   padding: 0;
@@ -20,10 +20,31 @@ body {
   height: 100%;
 }
 
-/* 添加 rem 适配 */
-@media screen and (max-width: 750px) {
-  html {
-    font-size: calc(100vw / 375 * 14);
+.bottom-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: fixed;
+  padding: 10px;
+  box-sizing: border-box;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 56px;
+  background-color: #ffffff;
+  box-shadow: 5px -5px 10px #e8e8e8, -5px 5px 10px #ffffff;
+
+  & > div {
+    display: flex;
+    position: relative;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background-color: #003f93;
+    border-radius: 10px;
+    color: #ffffff;
+    margin: 0 10px;
   }
 }
 </style>

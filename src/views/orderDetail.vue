@@ -1,115 +1,221 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, reactive } from "vue";
 import { ORDER_STATUS } from "../utils/constant";
 import moment from "moment";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import request from "@/utils/request";
 import AMap from "@/components/AMap.vue";
+import { showToast } from "vant";
 
 let map = null;
 const mapLoaded = (m) => {
   map = m;
 };
 
-const orderDetail = ref(null);
-function getOrderDetail(orderNo) {
-  let interval = setInterval(() => {
-    // request({
-    //   url: "/app/common/order/get",
-    //   method: "POST",
-    //   headers: {
-    //     Authorization: route.query.token,
+const orderDetail = reactive({});
+function getOrderDetail(logId) {
+  // let interval = setInterval(() => {
+  request({
+    url: "/app/common/order/get",
+    method: "POST",
+    headers: {
+      Authorization: route.query.token,
+    },
+    data: {
+      logId,
+    },
+  }).then((res) => {
+    // const res = {
+    //   orderNo: "2024122300020510001535,2024122300023310000451",
+    //   passengerId: "1844637171561308161",
+    //   orderTime: "2024-12-23 05:36:58",
+    //   orderState: "1",
+    //   orderStateStr: null,
+    //   orderSource: null,
+    //   orderAmount: null,
+    //   businessType: "5",
+    //   arrangedTips: null,
+    //   order: {
+    //     logId: "1871067455328141313",
+    //     passengerId: "1844637171561308161",
+    //     orderPersonPhone: "15179816883",
+    //     orderPersonDeptName: null,
+    //     orderPersonOrgName: null,
+    //     orderPersonName: "6883",
+    //     passengerPhone: "15179811111",
+    //     passengerName: "1111",
+    //     orderTime: "2024-12-23 05:36:58",
+    //     orderState: "101",
+    //     useCarTime: "2024-12-23 13:36:50",
+    //     useCarReason: "送领文件",
+    //     orderType: "1",
+    //     rentDuration: "12",
+    //     dispatchType: "0",
+    //     placeOrderType: "2",
+    //     startLngtitude: 120.211784,
+    //     startLatitude: 30.208879,
+    //     startAddress: "高新区(滨江)公安分局",
+    //     startAddressFull: "",
+    //     endLngtitude: 120.223401,
+    //     endLatitude: 30.220748,
+    //     endAddress: "印月尚庭(西北门)",
+    //     endAddressFull: "丹枫路86号印月尚庭",
+    //     approvalNo: null,
+    //     togetherOrder: "0",
+    //     orderNo: "2024122300020510001535,2024122300023310000451",
+    //     businessType: "5,33",
+    //     chooseBusinessType: "5,33",
+    //     businessId: "2024122313370502406",
+    //     cancelType: "2",
+    //     cancelDesc: "系统取消",
+    //     cancelTime: "2024-12-23 05:57:05",
+    //     createUserId: "1844637172337127425",
+    //     orgId: "1",
+    //     orgName: null,
+    //     orderSource: "2",
+    //     dispatchSource: "5,33",
+    //     driverId: null,
+    //     vehicleId: null,
+    //     togetherList: null,
     //   },
-    //   data: {
-    //     orderNo,
-    //   },
-    // }).then((res) => {
-    const res = {
-      orderNo: "2024122300020510001535,2024122300023310000451",
-      passengerId: "1844637171561308161",
-      orderTime: "2024-12-23 05:36:58",
-      orderState: "1",
-      orderStateStr: null,
-      orderSource: null,
-      orderAmount: null,
-      businessType: "5,33",
-      arrangedTips: null,
-      order: {
-        logId: "1871067455328141313",
-        passengerId: "1844637171561308161",
-        orderPersonPhone: "15179816883",
-        orderPersonDeptName: null,
-        orderPersonOrgName: null,
-        orderPersonName: "6883",
-        passengerPhone: "15179811111",
-        passengerName: "1111",
-        orderTime: "2024-12-23 05:36:58",
-        orderState: "101",
-        useCarTime: "2024-12-23 13:36:50",
-        useCarReason: "送领文件",
-        orderType: "1",
-        rentDuration: "12",
-        dispatchType: "0",
-        placeOrderType: "2",
-        startLngtitude: 120.211784,
-        startLatitude: 30.208879,
-        startAddress: "高新区(滨江)公安分局",
-        startAddressFull: "",
-        endLngtitude: 120.223401,
-        endLatitude: 30.220748,
-        endAddress: "印月尚庭(西北门)",
-        endAddressFull: "丹枫路86号印月尚庭",
-        approvalNo: null,
-        togetherOrder: "0",
-        orderNo: "2024122300020510001535,2024122300023310000451",
-        businessType: "5,33",
-        chooseBusinessType: "5,33",
-        businessId: "2024122313370502406",
-        cancelType: "2",
-        cancelDesc: "系统取消",
-        cancelTime: "2024-12-23 05:57:05",
-        createUserId: "1844637172337127425",
-        orgId: "1",
-        orgName: null,
-        orderSource: "2",
-        dispatchSource: "5,33",
-        driverId: null,
-        vehicleId: null,
-        togetherList: null,
-      },
-    };
+    // };
     console.log(res);
-    orderDetail.value = res;
+    Object.assign(orderDetail, res);
     if (
-      orderDetail.value &&
-      ["100", "101", "102"].includes(orderDetail.value.orderState)
+      orderDetail.orderNo &&
+      ["100", "101", "102"].includes(orderDetail.orderState)
     ) {
-      console.log("clear");
-      clearInterval(interval);
-      interval = null;
+      // clearInterval(interval);
+      // interval = null;
     }
-    // });
-  }, 1000);
+  });
+  // }, 3000);
+}
+
+const router = useRouter();
+function handleReOrder() {
+  const orderData = orderDetail.order;
+  if (orderData.orderState === "101") {
+    orderData.overTimeOrder = "1";
+    orderData.overTimeApprovalNo = orderData.approvalNo;
+  }
+  request({
+    url: "/app/common/order/add",
+    method: "POST",
+    headers: {
+      Authorization: route.query.token,
+    },
+    data: {
+      ...orderData,
+    },
+  }).then((res) => {
+    router.replace({
+      path: "/orderDetail",
+      query: {
+        logId: res.logId,
+      },
+    });
+    getOrderDetail(res.logId);
+  });
 }
 
 const showStateInfo = computed(() => {
-  const s = ORDER_STATUS[orderDetail.value.orderState];
+  const s = ORDER_STATUS[orderDetail.orderState];
   if (s) {
     return {
       text: s.text,
-      subtext: orderDetail.value.order.cancelDesc || s.subtext("曹操出行"),
+      subtext: orderDetail.order.cancelDesc || s.subtext("曹操出行"),
     };
   }
   return {
-    text: orderDetail.value.orderStateStr || ORDER_STATUS[-1].text,
+    text: orderDetail.orderStateStr || ORDER_STATUS[-1].text,
     subtext: ORDER_STATUS[-1].subtext(),
   };
 });
 
+const cancelReason = [
+  "行程有变，暂时不需要用车",
+  "联系不上司机",
+  "司机告诉我来不了",
+  "司机找不到上车地点",
+  "其他",
+];
+const chooseReason = ref("");
+const showCancleDialog = ref(false);
+function cancelOrder(type) {
+  if (type === "show") {
+    showCancleDialog.value = true;
+  }
+  if (type === "confirm") {
+    request({
+      url: "/app/common/order/cancel",
+      method: "POST",
+      headers: {
+        Authorization: route.query.token,
+      },
+      data: {
+        orderNo: orderDetail.orderNo,
+        businessType: orderDetail.businessType,
+        cancelDesc: chooseReason.value,
+        logId: orderDetail.order.logId,
+      },
+    }).then((res) => {
+      if (res.logId) {
+        showToast("取消成功");
+        getOrderDetail(res.logId);
+      }
+    });
+  }
+  if (type === "cancel") {
+    showCancleDialog.value = false;
+    chooseReason.value = "";
+  }
+}
+
+function callPolice() {
+  request({
+    url: "/app/hailing/passenger/alarm/oneTouch",
+    method: "POST",
+    headers: {
+      Authorization: route.query.token,
+    },
+    data: {
+      alarmTime: moment().format("YYYY-MM-DD HH:mm:ss"),
+      // todo 获取当前经纬度
+      // "latitude": 0,
+      // "lngtitude": 0,
+      // "address": "string",
+      orderNo: orderDetail.orderNo,
+    },
+  }).then((res) => {
+    console.log(res);
+  });
+}
+
+// // 分享行程
+// const shareTrip = () => {
+//   uni.showShareMenu({
+//     withShareTicket: true,
+//     menus: ["shareAppMessage", "shareTimeline"],
+//   });
+// };
+
+// // 联系客服
+// const contactService = () => {
+//   uni.makePhoneCall({
+//     phoneNumber: "400-000-0000", // 客服电话
+//     fail: (err) => {
+//       uni.showToast({
+//         title: "拨打电话失败",
+//         icon: "none",
+//       });
+//     },
+//   });
+// };
+
 const route = useRoute();
 onMounted(() => {
-  console.log(route.query);
-  getOrderDetail(route.query.orderNo);
+  getOrderDetail(route.query.logId);
   // request({
   //   url: "/app/hailing/order/path/planning/info",
   //   method: "POST",
@@ -194,7 +300,7 @@ onMounted(() => {
 });
 </script>
 <template>
-  <div v-if="orderDetail" class="order-detail-wrap">
+  <div v-if="orderDetail.orderNo" class="order-detail-wrap">
     <a-map
       style="min-height: 35vh"
       @loaded="mapLoaded"
@@ -243,7 +349,7 @@ onMounted(() => {
           </div>
           <div>经济型1</div>
         </div>
-        <div class="div-btn">取消订单</div>
+        <div class="div-btn" @click="cancelOrder('show')">取消订单</div>
       </div>
     </div>
     <div
@@ -252,7 +358,7 @@ onMounted(() => {
       "
       class="order-btns"
     >
-      <div class="action-btn" @click="cancelOrder">
+      <div class="action-btn" @click="cancelOrder('show')">
         <img src="@/assets/close.svg" alt="" />
         <span>取消订单</span>
       </div>
@@ -352,7 +458,7 @@ onMounted(() => {
         </div>
 
         <!-- 用车信息 -->
-        <div class="info-card_item">
+        <div class="info-card_item" v-if="orderDetail.order.useCarReason">
           <div class="card-title">用车信息</div>
           <div class="info-item">
             <span class="label">用车事由</span>
@@ -366,7 +472,7 @@ onMounted(() => {
         <div class="card-title">订单信息</div>
         <div class="info-item">
           <span class="label">订单号</span>
-          <span class="value">{{ route.query.orderNo }}</span>
+          <span class="value">{{ orderDetail.orderNo }}</span>
         </div>
         <div class="info-item">
           <span class="label">下单时间</span>
@@ -406,11 +512,37 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <div
+      class="bottom-wrap"
+      v-if="['101', '102'].includes(orderDetail.orderState)"
+    >
+      <div class="btn" @click="handleReOrder">重新寻车</div>
+    </div>
+
+    <van-dialog
+      v-model:show="showCancleDialog"
+      title="请选择取消原因"
+      show-cancel-button
+      @confirm="cancelOrder('confirm')"
+      @cancel="cancelOrder('cancel')"
+    >
+      <van-radio-group v-model="chooseReason">
+        <van-radio
+          v-for="item in cancelReason"
+          :key="item"
+          :name="item"
+          class="cancel-reason"
+          >{{ item }}</van-radio
+        >
+      </van-radio-group>
+    </van-dialog>
   </div>
 </template>
 <style scoped lang="scss">
 .order-detail-wrap {
   height: 100vh;
+  padding-bottom: 66px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -672,5 +804,9 @@ onMounted(() => {
   border-radius: 50%;
   flex-shrink: 0;
   margin-right: 6px;
+}
+
+.cancel-reason {
+  padding: 12px 24px;
 }
 </style>

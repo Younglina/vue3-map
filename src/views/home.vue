@@ -92,6 +92,12 @@ const setCarType = (type) => {
   window.localStorage.setItem("CAR_TYPE", type);
 };
 
+function toSetCommonArea(type) {
+  wx.miniProgram.navigateTo({
+    url: `/pages/commonChooseArea/index?type=${type}`,
+  });
+}
+
 const route = useRoute();
 onMounted(() => {
   currentCity.value = localStorage.getItem("CURRENT_CITY") || "";
@@ -139,11 +145,11 @@ onMounted(() => {
           <div class="address">你要去哪儿</div>
         </div>
         <div class="address-actions">
-          <div>
+          <div @click="toSetCommonArea('home')">
             <img src="@/assets/home.png" />
             <span>设置家庭住址</span>
           </div>
-          <div>
+          <div @click="toSetCommonArea('company')">
             <img src="@/assets/company.png" />
             <span>设置公司</span>
           </div>
@@ -193,7 +199,6 @@ onMounted(() => {
   }
 }
 .area-wrap {
-  height: 15rem;
   background: linear-gradient(180deg, #ffe9dc 0%, #fef4ef 14.64%, #f5f7fb 100%);
   border-radius: 20px;
   padding: 12px;

@@ -77,7 +77,7 @@ const setCarType = (type) => {
   currentCarType.value = window.localStorage.getItem("CAR_TYPE") || type;
   if (type === "person") {
     currentDateType.value = "2";
-    useCarTime.value = ["预约"];
+    useCarTime.value[0] = [moment().format("MM-DD HH:mm")];
   } else {
     currentDateType.value = "1";
   }
@@ -486,20 +486,20 @@ const initMap = async () => {
 };
 
 function getNearByCar() {
-  request({
-    url: "/app/common/driver/v2/nearby",
-    method: "POST",
-    headers: {
-      Authorization: route.query.token,
-    },
-    data: {
-      businessType: "11",
-      startLatitude: markerInfo.flat,
-      startLongitude: markerInfo.flng,
-    },
-  }).then((res) => {
-    console.log(res);
-  });
+  // request({
+  //   url: "/app/common/driver/v2/nearby",
+  //   method: "POST",
+  //   headers: {
+  //     Authorization: route.query.token,
+  //   },
+  //   data: {
+  //     businessType: "11",
+  //     startLatitude: markerInfo.flat,
+  //     startLongitude: markerInfo.flng,
+  //   },
+  // }).then((res) => {
+  //   console.log(res);
+  // });
 }
 
 const passengerInfo = reactive({
@@ -591,6 +591,15 @@ const handleOrder = () => {
       showToast("请输入乘车人");
       return;
     }
+  } else {
+    if (!passengerInfo.phone) {
+      showToast("请输入乘车人");
+      return;
+    }
+    if (!useCarReason.value) {
+      showToast("选输入用车事由");
+      return;
+    }
   }
   const orderData = {
     businessType: currentCarType.value === "firm" ? "11" : "5",
@@ -608,7 +617,7 @@ const handleOrder = () => {
     useCarReason: useCarReason.value,
     rentDuration: useDateTypes.value === "4" ? "24" : "12",
     useCarTime: useCarTimeStr.value || moment().format("YYYY-MM-DD HH:mm:ss"),
-    planningPath: JSON.stringify(planningPath.value),
+    // planningPath: JSON.stringify(planningPath.value),
   };
   if (
     passengerInfo.companionInfos.length &&
@@ -616,6 +625,13 @@ const handleOrder = () => {
   ) {
     orderData.companionInfos = passengerInfo.companionInfos;
     orderData.togetherOrder = ~~passengerInfo.companionInfos.length > 0;
+  }
+  if (familyList.value.length) {
+    orderData.passengerName = familyList.value[0].name;
+    orderData.passengerPhone = familyList.value[0].phone;
+    // orderData.companionInfos = familyList.value.slice(1).map(item=>{
+
+    // })
   }
   if (pointList.value.length) {
     orderData.midwayList = pointList.value.map((item, idx) => {
