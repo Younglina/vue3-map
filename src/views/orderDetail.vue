@@ -6,6 +6,7 @@ import { useRoute, useRouter } from "vue-router";
 import request from "@/utils/request";
 import AMap from "@/components/AMap.vue";
 import { showToast } from "vant";
+import axios from "axios";
 
 let map = null;
 const mapLoaded = (m) => {
@@ -99,6 +100,30 @@ function handleReOrder() {
     orderData.overTimeOrder = "1";
     orderData.overTimeApprovalNo = orderData.approvalNo;
   }
+  // if (orderData.orderState === "101") {
+  //   request({
+  //     url: "/app/common/overTime/order/againAdd",
+  //     method: "POST",
+  //     headers: {
+  //       Authorization: route.query.token,
+  //     },
+  //     data: {
+  //       logId: orderData.logId,
+  //     },
+  //   })
+  //     .then((res) => {
+  //       router.replace({
+  //         path: "/orderDetail",
+  //         query: {
+  //           logId: res.logId,
+  //         },
+  //       });
+  //       getOrderDetail(res.logId);
+  //     })
+  //     .catch((err) => {
+  //       showToast(err.data.userTip);
+  //     });
+  // } else {
   request({
     url: "/app/common/order/add",
     method: "POST",
@@ -117,6 +142,7 @@ function handleReOrder() {
     });
     getOrderDetail(res.logId);
   });
+  // }
 }
 
 const showStateInfo = computed(() => {
@@ -133,15 +159,37 @@ const showStateInfo = computed(() => {
   };
 });
 
-const cancelReason = [
-  "行程有变，暂时不需要用车",
-  "联系不上司机",
-  "司机告诉我来不了",
-  "司机找不到上车地点",
-  "其他",
-];
+const cancelReason = ref([]);
 const chooseReason = ref("");
 const showCancleDialog = ref(false);
+function getCancelReason() {
+  request({
+    url: "/app/common/syscode/list",
+    method: "POST",
+    headers: {
+      Authorization: route.query.token,
+    },
+    data: {
+      typeCode: "HAILING_ORDER_CANCEL_DESC_TYPE",
+    },
+  }).then((res) => {
+    cancelReason.value = res.map((item) => item.codeName);
+  });
+}
+function getCancelAmount() {
+  request({
+    url: "/app/hailing/order/cancel/amount",
+    method: "POST",
+    headers: {
+      Authorization: route.query.token,
+    },
+    data: {
+      logId: orderDetail.order.logId,
+    },
+  }).then((res) => {
+    console.log(res);
+  });
+}
 function cancelOrder(type) {
   if (type === "show") {
     showCancleDialog.value = true;
@@ -182,40 +230,66 @@ function callPolice() {
     data: {
       alarmTime: moment().format("YYYY-MM-DD HH:mm:ss"),
       // todo 获取当前经纬度
-      // "latitude": 0,
-      // "lngtitude": 0,
-      // "address": "string",
+      latitude: orderDetail.order.startLatitude,
+      lngtitude: orderDetail.order.startLngtitude,
+      address: orderDetail.order.startAddress,
       orderNo: orderDetail.orderNo,
     },
   }).then((res) => {
     console.log(res);
+    showToast("报警成功");
   });
 }
 
 // // 分享行程
-// const shareTrip = () => {
-//   uni.showShareMenu({
-//     withShareTicket: true,
-//     menus: ["shareAppMessage", "shareTimeline"],
-//   });
-// };
+const shareTrip = () => {
+  // uni.showShareMenu({
+  //   withShareTicket: true,
+  //   menus: ["shareAppMessage", "shareTimeline"],
+  // });
+  // wx.miniProgram.postMessage({
+  //   data: {
+  //     url: `http://localhost:5173/?url=${encodeURIComponent(
+  //       "#/orderDetail?logId=1871799246868889602&token=MTUxNzk4MTY4ODN8emgwMDAwMnwyMDI0LTEyLTI1IDE3OjI1OjA4"
+  //     )}`,
+  //     title: "分享行程",
+  //   },
+  // });
+  wx.miniProgram.navigateTo({
+    url: `/pages/order/share`,
+  });
+};
 
 // // 联系客服
-// const contactService = () => {
-//   uni.makePhoneCall({
-//     phoneNumber: "400-000-0000", // 客服电话
-//     fail: (err) => {
-//       uni.showToast({
-//         title: "拨打电话失败",
-//         icon: "none",
-//       });
-//     },
-//   });
-// };
+const contactService = () => {
+  showDialog({
+    title: "温馨提示",
+    message: "是否拨打服务电话968845",
+    confirmButtonText: "拨打电话",
+    showCancelButton: true,
+  })
+    .then((res) => {
+      wx.miniProgram.navigateTo({
+        url: `/pages/transfer/index?makePhoneCall=968845`,
+      });
+    })
+    .catch(() => {
+      console.log("用户点击取消");
+    });
+};
 
 const route = useRoute();
 onMounted(() => {
   getOrderDetail(route.query.logId);
+  // axios("/api/signature?url=" + encodeURIComponent(window.location.href));
+  const appdsata = {
+    appId: "wxc6f5cb56394f1ae0",
+    nonceStr: "YWW5ZIXLWlvYno4I",
+    timestamp: 1735182029,
+    signature: "67920b72be7d7496544c755bebacb2c4c037fcdc",
+    url: "http://localhost:5173/#/orderDetail?logId=1871799246868889602&token=MTUxNzk4MTY4ODN8emgwMDAwMnwyMDI0LTEyLTI1IDE3OjI1OjA4",
+  };
+  getCancelReason();
   // request({
   //   url: "/app/hailing/order/path/planning/info",
   //   method: "POST",
@@ -352,12 +426,10 @@ onMounted(() => {
         <div class="div-btn" @click="cancelOrder('show')">取消订单</div>
       </div>
     </div>
-    <div
-      v-if="
+    <!-- v-if="
         ['0', '2', '3', '4', '5', '6', '100'].includes(orderDetail.orderState)
-      "
-      class="order-btns"
-    >
+      " -->
+    <div class="order-btns">
       <div class="action-btn" @click="cancelOrder('show')">
         <img src="@/assets/close.svg" alt="" />
         <span>取消订单</span>
@@ -366,7 +438,7 @@ onMounted(() => {
         <img src="@/assets/110.png" alt="" />
         <span>110报警</span>
       </div>
-      <div class="action-btn" @click="shareRoute">
+      <div class="action-btn" @click="shareTrip">
         <img src="@/assets/share.png" alt="" />
         <span>分享行程</span>
       </div>
@@ -527,15 +599,17 @@ onMounted(() => {
       @confirm="cancelOrder('confirm')"
       @cancel="cancelOrder('cancel')"
     >
-      <van-radio-group v-model="chooseReason">
-        <van-radio
-          v-for="item in cancelReason"
-          :key="item"
-          :name="item"
-          class="cancel-reason"
-          >{{ item }}</van-radio
-        >
-      </van-radio-group>
+      <div class="reason-wrap">
+        <van-radio-group v-model="chooseReason">
+          <van-radio
+            v-for="item in cancelReason"
+            :key="item"
+            :name="item"
+            class="cancel-reason"
+            >{{ item }}</van-radio
+          >
+        </van-radio-group>
+      </div>
     </van-dialog>
   </div>
 </template>
@@ -808,5 +882,10 @@ onMounted(() => {
 
 .cancel-reason {
   padding: 12px 24px;
+}
+
+.reason-wrap {
+  max-height: 50vh;
+  overflow-y: auto;
 }
 </style>

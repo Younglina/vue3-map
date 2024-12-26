@@ -8,7 +8,7 @@ import OrderDetail from "../views/orderDetail.vue";
 
 const routes = [
   {
-    path: "/home",
+    path: "/home/:id",
     name: "Home",
     component: Home,
     meta: {

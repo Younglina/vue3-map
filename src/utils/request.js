@@ -22,7 +22,7 @@ const request = (options) => {
         resolve(res.data);
       },
       (err) => {
-        reject(err);
+        reject(err.response);
       }
     );
   });

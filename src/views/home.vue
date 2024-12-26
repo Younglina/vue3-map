@@ -1,7 +1,7 @@
 <script setup>
 import AMap from "../components/AMap.vue";
 import request from "@/utils/request";
-import { onMounted, reactive, ref } from "vue";
+import { watch, reactive, ref } from "vue";
 import { useRoute } from "vue-router";
 
 const currentCity = ref("");
@@ -78,12 +78,6 @@ function setArea(data) {
     mapData.latitude = data.latitude;
     mapData.address = data.address;
   }
-  if (data.type === "home") {
-    commonHome.value = data.name;
-  }
-  if (data.type === "company") {
-    commonCompany.value = data.name;
-  }
 }
 
 const currentCarType = ref("firm");
@@ -92,22 +86,62 @@ const setCarType = (type) => {
   window.localStorage.setItem("CAR_TYPE", type);
 };
 
+const homeAddress = ref({
+  addressName: "",
+  addressId: "",
+});
+const companyAddress = ref({
+  addressName: "",
+  addressId: "",
+});
+
 function toSetCommonArea(type) {
+  const place = type === "home" ? homeAddress.value : companyAddress.value;
   wx.miniProgram.navigateTo({
-    url: `/pages/commonChooseArea/index?type=${type}`,
+    url: `/pages/commonChooseArea/index?type=${type}&placeName=${place.placeName}&addressId=${place.addressId}&token=${route.query.token}`,
+  });
+}
+
+function getAddress() {
+  request({
+    url: "/app/hailing/passenger/address/page",
+    method: "POST",
+    headers: {
+      Authorization: route.query.token,
+    },
+    data: {
+      pageNum: 1,
+      pageSize: 10,
+    },
+  }).then((res) => {
+    console.log(res);
+    res.content.forEach((item) => {
+      if (item.placeType === "1") {
+        homeAddress.value = item;
+      }
+      if (item.placeType === "2") {
+        companyAddress.value = item;
+      }
+    });
   });
 }
 
 const route = useRoute();
-onMounted(() => {
-  currentCity.value = localStorage.getItem("CURRENT_CITY") || "";
-  window.localStorage.setItem("ZSX_WX_TOKEN", route.query.token);
-  // request({
-  //   url: "/v1/common/miscellaneous/weather",
-  // }).then((res) => {
-  //   console.log(res);
-  // });
-});
+watch(
+  () => route.params,
+  () => {
+    console.log("home watch", route.query);
+    currentCity.value = localStorage.getItem("CURRENT_CITY") || "";
+    window.localStorage.setItem("ZSX_WX_TOKEN", route.query.token);
+    getAddress();
+    // request({
+    //   url: "/v1/common/miscellaneous/weather",
+    // }).then((res) => {
+    //   console.log(res);
+    // });
+  },
+  { deep: true, immediate: true }
+);
 </script>
 <template>
   <div class="home">
@@ -147,11 +181,11 @@ onMounted(() => {
         <div class="address-actions">
           <div @click="toSetCommonArea('home')">
             <img src="@/assets/home.png" />
-            <span>设置家庭住址</span>
+            <span>{{ homeAddress.addressName || "设置家庭住址" }}</span>
           </div>
           <div @click="toSetCommonArea('company')">
             <img src="@/assets/company.png" />
-            <span>设置公司</span>
+            <span>{{ companyAddress.addressName || "设置公司" }}</span>
           </div>
         </div>
       </div>
@@ -267,6 +301,9 @@ onMounted(() => {
     border-radius: 8px;
     color: #858b9c;
     font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   img {
     width: 12px;

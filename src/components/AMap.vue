@@ -631,6 +631,7 @@ const getPOIByLocation = async (location) => {
               code: address.addressComponent.citycode,
             },
           });
+          localStorage.setItem("CURRENT_CITY", address.addressComponent.city);
         }
       });
     } else {

@@ -3,10 +3,12 @@ import AMapLoader from "@amap/amap-jsapi-loader";
 import Empty from "./Empty.vue";
 import { ref, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import request from "../utils/request";
 
 const currentCity = ref("");
 const route = useRoute();
 
+const historySearchList = ref([]);
 let AMap = null;
 window._AMapSecurityConfig = {
   securityJsCode: "9537a21ee34efb281c3fe92b4f1055bf",
@@ -23,6 +25,10 @@ onMounted(() => {
     route.query.city && route.query.city !== "undefined"
       ? route.query.city
       : localStorage.getItem("CURRENT_CITY");
+  const selectHistory = JSON.parse(
+    localStorage.getItem("ZSX_SELECT_HISTORY") || "[]"
+  );
+  historySearchList.value = selectHistory;
 });
 
 const inputValue = ref("");
@@ -35,7 +41,12 @@ const getPOIByKeyword = (keyword) => {
     placeSearch.search(keyword, (status, result) => {
       if (status === "complete" && result.info === "OK") {
         let p1;
-        if (route.query.longitude && route.query.latitude) {
+        if (
+          route.query.longitude &&
+          route.query.latitude &&
+          route.query.longitude !== "undefined" &&
+          route.query.latitude !== "undefined"
+        ) {
           p1 = [route.query.longitude, route.query.latitude];
         }
         searchPOIList.value = result.poiList.pois.slice(0, 12).map((item) => {
@@ -68,7 +79,6 @@ const handleInput = (v) => {
 };
 watch(inputValue, handleInput(inputValue));
 
-const historySearchList = ref([]);
 const pois = ref([]);
 // 获取POI信息
 // const getPOIByLocation = async (location) => {
@@ -360,6 +370,39 @@ const handleSelectPOI = (item) => {
       }&idx=${route.query.idx}`,
     });
   }
+
+  if (["home", "company"].includes(route.query.type)) {
+    let url = "/app/hailing/passenger/address/add";
+    const areaData = {
+      addressName: item.name,
+      placeName: item.name,
+      address: item.address,
+      lngtitude: longitude,
+      latitude,
+      placeType: route.query.type === "home" ? 1 : 2,
+    };
+    if (route.query.addressId && route.query.addressId !== "undefined") {
+      areaData.addressId = route.query.addressId;
+      url = "/app/hailing/passenger/address/update";
+    }
+    request({
+      url,
+      method: "POST",
+      headers: {
+        Authorization: route.query.token,
+      },
+      data: areaData,
+    }).then((res) => {
+      wx.miniProgram.navigateBack();
+    });
+  }
+  const selectHistory = JSON.parse(
+    localStorage.getItem("ZSX_SELECT_HISTORY") || "[]"
+  );
+  if (!selectHistory.some((h) => h.id === item.id)) {
+    selectHistory.push(item);
+  }
+  localStorage.setItem("ZSX_SELECT_HISTORY", JSON.stringify(selectHistory));
 };
 </script>
 <template>
@@ -428,11 +471,11 @@ const handleSelectPOI = (item) => {
         class="poi-item"
         @click="handleSelectPOI(item)"
       >
-        <img src="@/assets/clock.png" alt="" />
+        <img class="clock-icon" src="@/assets/clock.png" alt="" />
         <div class="poi-info">
           <div class="poi-name">{{ item.name }}</div>
           <div class="poi-address">
-            {{ item.distance }}{{ item.unit }} | {{ item.address }}
+            {{ item.address }}
           </div>
         </div>
       </div>
@@ -586,6 +629,9 @@ const handleSelectPOI = (item) => {
       width: 12px;
       height: 16px;
       margin-right: 10px;
+    }
+    .clock-icon {
+      width: 16px;
     }
     .poi-name {
       font-weight: 700;
