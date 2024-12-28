@@ -7,6 +7,13 @@ import { generateDateArray } from "@/utils/utils";
 import request from "@/utils/request";
 import taxiIcon from "@/assets/taxi.png";
 import haixiaIcon from "@/assets/haixia.png";
+import fastIcon from "@/assets/fast.png";
+
+const vehicleModelLevel = {
+  fastCar: fastIcon,
+  specialCar: haixiaIcon,
+  taxi: taxiIcon,
+};
 
 const route = useRoute();
 const mapContainer = ref(null);
@@ -74,7 +81,7 @@ const toReason = () => {
 // 用车类型
 const currentCarType = ref("firm");
 const setCarType = (type) => {
-  currentCarType.value = window.localStorage.getItem("CAR_TYPE") || type;
+  currentCarType.value = type;
   if (type === "person") {
     currentDateType.value = "2";
     useCarTime.value[0] = [moment().format("MM-DD HH:mm")];
@@ -84,11 +91,6 @@ const setCarType = (type) => {
 };
 
 const carList = ref([]);
-const runInfo = reactive({
-  duration: "",
-  mileage: "",
-});
-
 const formatDuration = (seconds) => {
   if (seconds < 60) {
     return `${seconds}秒`;
@@ -101,272 +103,275 @@ const formatDuration = (seconds) => {
     return `${hours}小时${minutes}分钟`;
   }
 };
+const formatDistance = (distance) => {
+  if (distance < 1000) {
+    return `${distance}米`;
+  } else {
+    return `${(distance / 1000).toFixed(1)}公里`;
+  }
+};
 
 const handleChoosePrice = (item) => {
-  item.defaultChooseState = item.defaultChooseState == "1" ? "0" : "1";
+  item.choosed = !item.choosed;
 };
 
 const getBusinessList = () => {
   // request({
-  //   url: "/app/hailing/business/list",
+  //   url: "/app/hailing/vehicle/model/level",
   //   method: "POST",
   //   headers: {
   //     Authorization: route.query.token,
   //   },
-  // }).then((business) => {
-  const business = {
-    code: "00000",
-    data: [
-      {
-        hailingType: "1",
-        businessTypeList: [
-          {
-            businessType: "5",
-            businessTypeStr: "掌上行专车",
-            displayState: "1",
-            defaultChooseState: "1",
-            tag: "",
-            tagColor: "858b9c",
-            tripTips: null,
-          },
-          {
-            businessType: "33",
-            businessTypeStr: "海峡优享出租",
-            displayState: "1",
-            defaultChooseState: "1",
-            tag: "仅限随车发票",
-            tagColor: "ff5257",
-            tripTips: null,
-          },
-        ],
-      },
-      {
-        hailingType: "2",
-        businessTypeList: [
-          {
-            businessType: "11",
-            businessTypeStr: "派车",
-            displayState: "1",
-            defaultChooseState: "1",
-            tag: "",
-            tagColor: "ff7d1a",
-            tripTips: null,
-          },
-        ],
-      },
-    ],
-  };
-  const businessData = business.data;
+  // data: {
+  //   businessType: "5",
+  // },
+  // }).then((businessData) => {
+  const businessData = [
+    {
+      vehicleModelLevel: "fastCar",
+      vehicleModelLevelName: "快车",
+      carTypes: [{ carTypeId: "HS001", carTypeName: "滴滴快车" }],
+    },
+    {
+      vehicleModelLevel: "specialCar",
+      vehicleModelLevelName: "专车",
+      carTypes: [
+        { carTypeId: "HS002", carTypeName: "曹操专车" },
+        { carTypeId: "ZSX001", carTypeName: "掌上行专车" },
+      ],
+    },
+    {
+      vehicleModelLevel: "taxi",
+      vehicleModelLevelName: "出租车",
+      carTypes: [{ carTypeId: "WXDW001", carTypeName: "优享出租" }],
+    },
+  ];
   if (businessData && businessData.length > 0) {
-    carList.value = businessData[0].businessTypeList;
-    // const businessTypeSet = carList.value.map((item) => item.businessType);
-    // const query = route.query;
-    // request({
-    //   url: "/app/hailing/trip/estimate/get",
-    //   method: "POST",
-    //   headers: {
-    //     Authorization: route.query.token,
-    //   },
-    //   data: {
-    //     businessTypeSet,
-    //     endLat: query.tlat,
-    //     endLng: query.tlng,
-    //     orderType: "1",
-    //     passengerCount: 1,
-    //     startLat: query.flat,
-    //     startLng: query.flng,
-    //     useCarTime: moment().format("YYYY-MM-DD HH:mm:ss"),
-    //   },
-    // }).then((res) => {
-    const res = {
-      useCarTime: "2024-12-19 12:49:38",
-      mileage: 2.646,
-      duration: 517,
-      orderType: "1",
-      taxiPushPlate: false,
-      estimatePriceList: [
-        {
-          businessType: "33",
-          orderType: "1",
-          startAmount: 10.0,
-          startMileage: 3.0,
-          mileageAmount: null,
-          remoteMileage: 8.0,
-          remoteAmount: null,
-          startTime: 10,
-          timeAmount: null,
-          basicAmount: 10.0,
-          dispatchAmount: null,
-          tripAmount: 10.0,
-          priceList: null,
-          hailingPriceDTO: {
-            priceId: "1753619451492503553",
-            businessType: "33",
-            orderType: "1",
-            orderTypeStr: "实时订单",
-            startMileage: 3.0,
-            startTime: 10,
-            remoteMileage: 8.0,
-            remotePrice: 1.0,
-            freeWaitingTime: 5,
-            latePrice: 0.98,
-            cancelTimeBeforeUse: null,
-            cancelTimeAfterDispatch: 5,
-            cancelPrice: 0.0,
-            basicPrice: 10.0,
-            dispatchPrice: 0.0,
-            startPrice: 10.0,
-            mileagePrice: 2.0,
-            timePrice: 0.2,
-            timeIntervalPriceList: [
-              {
-                timeId: "1778579495334879234",
-                priceId: "1753619451492503553",
-                timeIntervalType: "2",
-                timeIntervalStart: "1970-01-01 15:00:00",
-                timeIntervalEnd: "1970-01-01 15:59:00",
-                startPrice: 12.0,
-                mileagePrice: 2.4,
-                timePrice: 0.2,
-              },
-              {
-                timeId: "1778579495343267842",
-                priceId: "1753619451492503553",
-                timeIntervalType: "2",
-                timeIntervalStart: "1969-12-31 16:00:00",
-                timeIntervalEnd: "1969-12-31 21:00:00",
-                startPrice: 12.0,
-                mileagePrice: 2.4,
-                timePrice: 0.2,
-              },
-            ],
-          },
-          payAmount: 10,
-          benAmount: 0.0,
-          remark: "该车型为巡网融合车型，计费方式均与巡网出租车一致",
-          chargeModel: 1,
-          bestChooseData: {
-            orderAmount: 10,
-            payAmount: 10,
-            discountAmountInfoList: [],
-            integralCost: null,
-            integralDeductionAmount: null,
-            couponDiscountAmount: null,
-            productSaleId: null,
-            ruleId: null,
-            productDiscountAmount: null,
-          },
-        },
-        {
-          businessType: "5",
-          orderType: "1",
-          startAmount: 10.0,
-          startMileage: 3.0,
-          mileageAmount: null,
-          remoteMileage: 15.0,
-          remoteAmount: null,
-          startTime: 10,
-          timeAmount: null,
-          basicAmount: 10.0,
-          dispatchAmount: null,
-          tripAmount: 10.0,
-          priceList: null,
-          hailingPriceDTO: {
-            priceId: "1699740258014633986",
-            businessType: "5",
-            orderType: "1",
-            orderTypeStr: "实时订单",
-            startMileage: 3.0,
-            startTime: 10,
-            remoteMileage: 15.0,
-            remotePrice: 0.75,
-            freeWaitingTime: 5,
-            latePrice: 0.98,
-            cancelTimeBeforeUse: null,
-            cancelTimeAfterDispatch: 5,
-            cancelPrice: 3.0,
-            basicPrice: 10.0,
-            dispatchPrice: 0.0,
-            startPrice: 10.0,
-            mileagePrice: 2.7,
-            timePrice: 0.5,
-            timeIntervalPriceList: [
-              {
-                timeId: "1775425357039763458",
-                priceId: "1699740258014633986",
-                timeIntervalType: "2",
-                timeIntervalStart: "1970-01-01 14:00:00",
-                timeIntervalEnd: "1970-01-01 15:59:00",
-                startPrice: 10.0,
-                mileagePrice: 3.0,
-                timePrice: 1.0,
-              },
-              {
-                timeId: "1775425357048152066",
-                priceId: "1699740258014633986",
-                timeIntervalType: "2",
-                timeIntervalStart: "1969-12-31 16:00:00",
-                timeIntervalEnd: "1969-12-31 21:00:00",
-                startPrice: 10.0,
-                mileagePrice: 3.0,
-                timePrice: 1.0,
-              },
-            ],
-          },
-          payAmount: 10,
-          benAmount: 0.0,
-          remark: null,
-          chargeModel: null,
-          bestChooseData: {
-            orderAmount: 10,
-            payAmount: 10,
-            discountAmountInfoList: [],
-            integralCost: null,
-            integralDeductionAmount: null,
-            couponDiscountAmount: null,
-            productSaleId: null,
-            ruleId: null,
-            productDiscountAmount: null,
-          },
-        },
-      ],
-    };
-    carList.value.forEach((item) => {
-      const price = res.estimatePriceList.find(
-        (i) => i.businessType === item.businessType
-      );
-      item.benAmount = price.benAmount;
-      item.payAmount = price.payAmount;
+    businessData.forEach((item) => {
+      item.choosedNum = 0;
+      item.choosed = [];
+      item.priceStr = "-";
+      item.minPrice = Infinity;
+      item.maxPrice = -Infinity;
+      item.carTypes.forEach((i) => {
+        i.choosed = "0";
+      });
     });
-    runInfo.duration = formatDuration(res.duration);
-    runInfo.mileage = res.mileage;
-
-    // 添加路程信息标记
-    const centerText = new AMap.Text({
-      text: `<div style="font-size:12px">${runInfo.mileage}公里 ${runInfo.duration}</div><div style="font-size:10px">*仅做参考示意，以实际行驶为准</div>`,
-      anchor: "center",
-      position: [
-        (Number(route.query.flng) + Number(route.query.tlng)) / 2,
-        (Number(route.query.flat) + Number(route.query.tlat)) / 2,
-      ],
-      style: {
-        padding: "2px 4px",
-        "background-color": "#666f83",
-        opacity: "80%",
-        "border-radius": "4px",
-        "border-width": 0,
-        color: "#ffffff",
-        "min-width": "128px",
-      },
-    });
-
-    map.add(centerText);
+    carList.value = businessData;
     // });
   }
   // });
 };
 
+// 点击外面的车请求运力类型以后缓存
+const cacheCarType = reactive({});
+// 当前大类车
+const tempCarTypeInfo = ref({});
+const showCarPicker = ref(false);
+// 点击大类车
+const handleChooseCar = (item) => {
+  if (cacheCarType[item.vehicleModelLevel]) {
+    tempCarTypeInfo.value = JSON.parse(
+      JSON.stringify(cacheCarType[item.vehicleModelLevel])
+    );
+    showCarPicker.value = true;
+    return;
+  }
+  // request({
+  //   url: "/app/hailing/trip/estimate/v2/get",
+  //   method: "POST",
+  //   headers: {
+  //     Authorization: route.query.token,
+  //   },
+  //   data: {
+  //     businessType: currentCarType.value === "person" ? "5" : "11",
+  //     carTypeIds: item.carTypes.map((i) => i.carTypeId),
+  //     endLat: markerInfo.tlat,
+  //     endLng: markerInfo.tlng,
+  //     endAddress: markerInfo.tname,
+  //     orderType: currentDateType.value,
+  //     startLat: markerInfo.flat,
+  //     startLng: markerInfo.flng,
+  //     startAddress: markerInfo.fname,
+  //     useCarTime: moment().format("YYYY-MM-DD HH:mm:ss"),
+  //   },
+  // })
+  //   .then((res) => {
+  const res = [
+    {
+      vehicleModelLevel: item.vehicleModelLevel,
+      vehicleModelLevelName: item.vehicleModelLevelName,
+      estimateMinPrice: 55.04,
+      estimateMaxPrice: 55.04,
+      discountMaxPrice: 0,
+      estimateCarTypes: [
+        {
+          carTypeId: "ZSX001",
+          carTypeName: "掌上行专车",
+          taxiMetered: false,
+          estimateId: null,
+          estimateDistance: 3.011,
+          estimateTime: 10,
+          estimatePrice: 55.04,
+          discountPrice: 0.0,
+          fixedPriceType: null,
+          fixedPrice: 0.0,
+          travelPrice: 55.04,
+          minPrice: 1.0,
+          initPrice: 1.0,
+          distancePrice: 2.02,
+          timePrice: 50.0,
+          nightPrice: 0.0,
+          longDistance: 1.0,
+          longDistancePrice: 2.02,
+          dynamicPrice: 0.0,
+          servicePrice: 0.0,
+        },
+        {
+          carTypeId: "ZSX002",
+          carTypeName: "专车",
+          taxiMetered: false,
+          estimateId: null,
+          estimateDistance: 3.011,
+          estimateTime: 10,
+          estimatePrice: 50.04,
+          discountPrice: 0.0,
+          fixedPriceType: null,
+          fixedPrice: 0.0,
+          travelPrice: 50.04,
+          minPrice: 1.0,
+          initPrice: 1.0,
+          distancePrice: 2.02,
+          timePrice: 50.0,
+          nightPrice: 0.0,
+          longDistance: 1.0,
+          longDistancePrice: 2.02,
+          dynamicPrice: 0.0,
+          servicePrice: 0.0,
+        },
+      ],
+    },
+  ];
+  if (res && res.length) {
+    res[0].choosedNum = 0;
+    res[0].allChoosed = false;
+    res[0].estimateCarTypes.forEach((ec) => {
+      ec.choosed = "0";
+      ec.vehicleModelLevel = ec.vehicleModelLevel;
+    });
+    tempCarTypeInfo.value = JSON.parse(JSON.stringify(res[0]));
+    cacheCarType[item.vehicleModelLevel] = res[0];
+    showCarPicker.value = true;
+  } else {
+    showToast("无可用车型");
+  }
+  // })
+  // .catch(() => {
+  //   showToast("无可用车型");
+  // });
+};
+// 选择里面的小类车
+const handleChooseSubCar = (car) => {
+  car.choosed = car.choosed == "1" ? "0" : "1";
+  tempCarTypeInfo.value.choosedNum =
+    tempCarTypeInfo.value.estimateCarTypes.filter(
+      (item) => item.choosed == "1"
+    ).length;
+  tempCarTypeInfo.value.allChoosed =
+    tempCarTypeInfo.value.choosedNum ===
+    tempCarTypeInfo.value.estimateCarTypes.length;
+};
+// 全选
+const handleChooseAllSubCar = () => {
+  tempCarTypeInfo.value.allChoosed = !tempCarTypeInfo.value.allChoosed;
+  tempCarTypeInfo.value.choosedNum = tempCarTypeInfo.value.allChoosed
+    ? tempCarTypeInfo.value.estimateCarTypes.length
+    : 0;
+  tempCarTypeInfo.value.estimateCarTypes.forEach((item) => {
+    item.choosed = tempCarTypeInfo.value.allChoosed ? "1" : "0";
+  });
+};
+// 已选的车型
+const totalChooseCarTypeNum = ref(0);
+const totalMinMaxPrice = reactive({
+  min: Infinity,
+  max: -Infinity,
+});
+const totalMinMaxPriceStr = ref("-");
+// 确认选择里面的小类车
+const handleSureChoose = () => {
+  cacheCarType[tempCarTypeInfo.value.vehicleModelLevel] = JSON.parse(
+    JSON.stringify(tempCarTypeInfo.value)
+  );
+  showCarPicker.value = false;
+  const allChoosed = [];
+  carList.value.forEach((item) => {
+    // 更新当前选择小类车的状态，并更新大类车的预估价格范围
+    if (item.vehicleModelLevel === tempCarTypeInfo.value.vehicleModelLevel) {
+      let minPrice = 0,
+        maxPrice = 0;
+      const choosed = tempCarTypeInfo.value.estimateCarTypes.filter(
+        (item) => item.choosed == "1"
+      );
+      if (choosed.length) {
+        item.choosedNum = choosed.length;
+        choosed.forEach((i) => {
+          if (minPrice == 0 || minPrice > i.estimatePrice) {
+            minPrice = i.estimatePrice;
+          }
+          if (maxPrice == 0 || maxPrice < i.estimatePrice) {
+            maxPrice = i.estimatePrice;
+          }
+          i.vehicleModelLevel = item.vehicleModelLevel;
+        });
+        item.priceStr =
+          minPrice == maxPrice ? `${minPrice}` : `${minPrice}~${maxPrice}`;
+        item.minPrice = Math.min(minPrice, item.minPrice);
+        item.maxPrice = Math.max(maxPrice, item.maxPrice);
+        item.choosed = choosed;
+      } else {
+        item.choosed = [];
+        item.choosedNum = 0;
+        item.priceStr = "-";
+        item.minPrice = Infinity;
+        item.maxPrice = -Infinity;
+      }
+    }
+    allChoosed.push(...item.choosed);
+  });
+  console.log({ allChoosed });
+  // 每次选择以后 重新计算总的选择车型数量，以及总的预估价格范围
+  totalChooseCarTypeNum.value = allChoosed.length;
+  totalMinMaxPrice.min = Infinity;
+  totalMinMaxPrice.max = -Infinity;
+  totalMinMaxPriceStr.value = "-";
+  if (allChoosed.length) {
+    allChoosed.forEach((item) => {
+      totalMinMaxPrice.min = Math.min(item.estimatePrice, totalMinMaxPrice.min);
+      totalMinMaxPrice.max = Math.max(item.estimatePrice, totalMinMaxPrice.max);
+    });
+    totalMinMaxPriceStr.value =
+      totalMinMaxPrice.min == totalMinMaxPrice.max
+        ? `${totalMinMaxPrice.min}`
+        : `${totalMinMaxPrice.min}~${totalMinMaxPrice.max}`;
+  }
+};
+const toPriceInfoPage = (item, vehicleModelLevel) => {
+  localStorage.setItem(
+    "ZSX_PRICEINFO",
+    JSON.stringify({ ...item, vehicleModelLevel })
+  );
+  wx.miniProgram.navigateTo({
+    url: `/pages/transfer/index?page=ZSX_PRICEINFO`,
+  });
+};
+
 const markerInfo = reactive({});
+const runInfo = reactive({
+  duration: "",
+  mileage: "",
+});
+
 const initMap = async () => {
   if (route.query.flng && route.query.flat) {
     Object.assign(markerInfo, route.query);
@@ -471,36 +476,43 @@ const initMap = async () => {
     (status, result) => {
       if (status === "complete") {
         console.log(result);
+        const distance = result.routes[0].distance;
+        const duration = result.routes[0].time;
+        runInfo.duration = formatDuration(duration);
+        runInfo.mileage = formatDistance(distance);
+
+        // 添加路程信息标记
+        const centerText = new AMap.Text({
+          text: `<div style="font-size:12px">${runInfo.mileage} ${runInfo.duration}</div><div style="font-size:10px">*仅做参考示意，以实际行驶为准</div>`,
+          anchor: "center",
+          position: [
+            (Number(route.query.flng) + Number(route.query.tlng)) / 2,
+            (Number(route.query.flat) + Number(route.query.tlat)) / 2,
+          ],
+          style: {
+            padding: "2px 4px",
+            "background-color": "#666f83",
+            opacity: "80%",
+            "border-radius": "4px",
+            "border-width": 0,
+            color: "#ffffff",
+            "min-width": "128px",
+          },
+        });
+
+        map.add(centerText);
         // 调整地图视野以包含所有标记点和路线
         map.setFitView(
-          [startMarker, endMarker, startText, endText],
+          [startMarker, endMarker, centerText, startText, endText],
           true,
-          [90, 90, 90, 90],
+          [75, 75, 75, 80],
           17
         );
       }
     }
   );
   getBusinessList();
-  getNearByCar();
 };
-
-function getNearByCar() {
-  // request({
-  //   url: "/app/common/driver/v2/nearby",
-  //   method: "POST",
-  //   headers: {
-  //     Authorization: route.query.token,
-  //   },
-  //   data: {
-  //     businessType: "11",
-  //     startLatitude: markerInfo.flat,
-  //     startLongitude: markerInfo.flng,
-  //   },
-  // }).then((res) => {
-  //   console.log(res);
-  // });
-}
 
 const passengerInfo = reactive({
   name: "",
@@ -521,15 +533,15 @@ const handleSelectPassenger = () => {
   });
 };
 
-const familyList = ref([]);
+const familyInfo = reactive({
+  familyList: [],
+  remark: "",
+  isCallme: "1",
+});
 const familyStr = ref("帮人叫车");
 const handleAddFamile = () => {
   let url = `/pages/chooseArea/addFamily`;
-  if (familyList.value.length) {
-    url += `?familyList=${encodeURIComponent(
-      JSON.stringify(familyList.value)
-    )}`;
-  }
+  url += `?familyInfo=${encodeURIComponent(JSON.stringify(familyInfo))}`;
   wx.miniProgram.navigateTo({
     url: url,
   });
@@ -562,14 +574,14 @@ watch(
     if (route.query.useCarReason) {
       useCarReason.value = route.query.useCarReason;
     }
-    if (route.query.familyList) {
-      familyList.value = JSON.parse(route.query.familyList || "[]");
-      if (familyList.value.length > 0) {
-        familyStr.value = familyList.value[0].name;
+    if (route.query.familyInfo) {
+      Object.assign(familyInfo, JSON.parse(route.query.familyInfo || "{}"));
+      if (familyInfo.familyList.length > 0) {
+        familyStr.value = familyInfo.familyList[0].name;
       } else {
         familyStr.value = "帮人叫车";
       }
-      if (familyList.value.length > 1) {
+      if (familyInfo.familyList.length > 1) {
         familyStr.value += `等`;
       }
     }
@@ -587,7 +599,7 @@ const handleOrder = () => {
       showToast("请选择时间");
       return;
     }
-    if (familyList.value.length === 0) {
+    if (familyInfo.familyList.length === 0) {
       showToast("请输入乘车人");
       return;
     }
@@ -601,24 +613,46 @@ const handleOrder = () => {
       return;
     }
   }
+  if (totalChooseCarTypeNum.value === 0) {
+    showToast("请选择车型");
+    return;
+  }
+  const choosedCarType = carList.value.reduce((acc, cur) => {
+    return acc.concat(cur.choosed);
+  }, []);
   const orderData = {
     businessType: currentCarType.value === "firm" ? "11" : "5",
     orderType: currentDateType.value,
     endAddress: markerInfo.tname,
     endLatitude: markerInfo.tlat,
     endLngtitude: markerInfo.tlng,
+    endLat: markerInfo.tlat,
+    endLng: markerInfo.tlng,
     endAddressFull: markerInfo.taddress,
     startAddress: markerInfo.fname,
     startLatitude: markerInfo.flat,
     startLngtitude: markerInfo.flng,
+    startLng: markerInfo.flng,
+    startLat: markerInfo.flat,
     startAddressFull: markerInfo.faddress,
     passengerName: passengerInfo.name,
     passengerPhone: passengerInfo.phone,
     useCarReason: useCarReason.value,
     rentDuration: useDateTypes.value === "4" ? "24" : "12",
     useCarTime: useCarTimeStr.value || moment().format("YYYY-MM-DD HH:mm:ss"),
+    totalChooseCarTypeNum: totalChooseCarTypeNum.value,
+    totalMinMaxPriceStr: totalMinMaxPriceStr.value,
+    addCarTypes: choosedCarType.map((item) => {
+      return {
+        carTypeId: item.carTypeId,
+        estimateAmount: item.estimatePrice,
+        estimateId: item.estimateId,
+        vehicleModelLevel: item.vehicleModelLevel,
+      };
+    }),
     // planningPath: JSON.stringify(planningPath.value),
   };
+  console.log(orderData);
   if (
     passengerInfo.companionInfos.length &&
     passengerInfo.companionInfos[0].companionPhone
@@ -626,12 +660,18 @@ const handleOrder = () => {
     orderData.companionInfos = passengerInfo.companionInfos;
     orderData.togetherOrder = ~~passengerInfo.companionInfos.length > 0;
   }
-  if (familyList.value.length) {
-    orderData.passengerName = familyList.value[0].name;
-    orderData.passengerPhone = familyList.value[0].phone;
-    // orderData.companionInfos = familyList.value.slice(1).map(item=>{
-
-    // })
+  if (familyInfo.familyList) {
+    orderData.passengerName = familyInfo.familyList[0].name;
+    orderData.passengerPhone = familyInfo.familyList[0].phone;
+    orderData.remark = familyInfo.remark;
+    orderData.isCallme = familyInfo.isCallme || "1";
+    orderData.companionInfos = familyInfo.familyList.slice(1).map((item) => {
+      return {
+        companionName: item.name,
+        companionPhone: item.phone,
+      };
+    });
+    orderData.togetherOrder = ~~orderData.companionInfos.length > 0;
   }
   if (pointList.value.length) {
     orderData.midwayList = pointList.value.map((item, idx) => {
@@ -651,7 +691,7 @@ const handleOrder = () => {
 // const mountedData = ref("");
 onMounted(() => {
   initMap();
-  setCarType("firm");
+  setCarType(window.localStorage.getItem("CAR_TYPE") || "firm");
   // mountedData.value = new Date();
 });
 </script>
@@ -686,34 +726,45 @@ onMounted(() => {
           >{{ item.label }}</span
         >
       </div>
-      <div v-for="item in carList" :key="item.businessType" class="car-item">
+      <div
+        v-for="item in carList"
+        :key="item.vehicleModelLevel"
+        class="car-item"
+      >
         <div class="car-info">
           <img
-            :src="item.businessType === '33' ? taxiIcon : haixiaIcon"
-            alt=""
+            :src="vehicleModelLevel[item.vehicleModelLevel]"
+            alt="vehicleModelLevel"
           />
           <div>
-            <div class="name">{{ item.businessTypeStr }}</div>
-            <div class="price">约¥{{ item.payAmount }}</div>
+            <div class="name">{{ item.vehicleModelLevelName }}</div>
+            <div class="choose-car" @click="handleChooseCar(item)">
+              <div>
+                已选<span class="choose"
+                  >{{ item.choosedNum }}/{{ item.carTypes.length }}</span
+                >个
+              </div>
+              <div class="right"></div>
+            </div>
           </div>
         </div>
         <div class="price-info">
           <div>
             <div>
-              预估<span class="forecast">{{ item.benAmount }}</span
+              预估<span class="forecast">{{ item.priceStr }}</span
               >元
             </div>
-            <div class="favorable">
-              已优惠<span class="favorable-price">20.50</span>元
-            </div>
+            <!-- <div class="favorable">
+              优惠<span class="favorable-price">20.50</span>元
+            </div> -->
           </div>
-          <div
+          <!-- <div
             class="car-checkbox"
             @click="handleChoosePrice(item)"
-            :class="item.defaultChooseState === '1' ? 'checked' : ''"
+            :class="item.choosed ? 'checked' : ''"
           >
-            <span v-if="item.defaultChooseState == '1'">✔</span>
-          </div>
+            <span v-if="item.choosed">✔</span>
+          </div> -->
         </div>
       </div>
       <div v-if="currentCarType === 'firm'">
@@ -761,12 +812,16 @@ onMounted(() => {
       </div>
       <div class="btns">
         <div class="bottom-price-wrap">
-          <div>预估<span class="bottom-price">15.82-14.91</span>元</div>
-          <div class="bottom-choose">已选2种车型</div>
+          <div>
+            预估<span class="bottom-price">{{ totalMinMaxPriceStr }}</span
+            >元
+          </div>
+          <div class="bottom-choose">已选{{ totalChooseCarTypeNum }}种车型</div>
         </div>
         <div class="bottom-btn" @click="handleOrder">下一步</div>
       </div>
 
+      <!-- 日期时间选择 -->
       <van-popup
         v-model:show="showDatePicker"
         position="bottom"
@@ -780,6 +835,80 @@ onMounted(() => {
           @cancel="showDatePicker = false"
         />
       </van-popup>
+
+      <!-- 车辆类型选择 -->
+      <van-popup
+        v-model:show="showCarPicker"
+        position="bottom"
+        :close-on-click-overlay="false"
+        class="popup-carlist"
+      >
+        <div class="total-price">
+          <span
+            >{{ tempCarTypeInfo.estimateMinPrice }}-{{
+              tempCarTypeInfo.estimateMaxPrice
+            }}元</span
+          >
+          <img
+            @click="showCarPicker = false"
+            src="@/assets/close.svg"
+            alt=""
+            srcset=""
+          />
+        </div>
+        <div class="car-list subcar-list">
+          <div class="choosed-car">
+            <span>已选以下{{ tempCarTypeInfo.choosedNum }}个服务商</span>
+            <div class="all-choose">
+              <span>全选</span>
+              <div
+                class="car-checkbox"
+                @click="handleChooseAllSubCar"
+                :class="tempCarTypeInfo.allChoosed ? 'checked' : ''"
+              >
+                <span v-if="tempCarTypeInfo.allChoosed">✔</span>
+              </div>
+            </div>
+          </div>
+          <div
+            v-for="item in tempCarTypeInfo.estimateCarTypes"
+            :key="item.carTypeId"
+            class="car-item"
+          >
+            <div class="car-info">
+              <img class="car-img" src="@/assets/carIcon.png" alt="" />
+              <div class="name">{{ item.carTypeName }}</div>
+            </div>
+            <div class="price-info">
+              <img
+                @click="
+                  toPriceInfoPage(item, tempCarTypeInfo.vehicleModelLevel)
+                "
+                class="info-icon"
+                src="@/assets/info.svg"
+                alt=""
+              />
+              <div class="favorable">
+                <span class="forecast">{{ item.estimatePrice }}</span
+                >元
+                <div v-if="item.discountPrice" class="favorable">
+                  优惠<span class="favorable-price"
+                    >-{{ item.discountPrice }}</span
+                  >元
+                </div>
+              </div>
+              <div
+                class="car-checkbox"
+                @click="handleChooseSubCar(item)"
+                :class="item.choosed === '1' ? 'checked' : ''"
+              >
+                <span v-if="item.choosed == '1'">✔</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="div-btn" @click="handleSureChoose(true)">确认</div>
+      </van-popup>
     </div>
   </div>
 </template>
@@ -791,7 +920,6 @@ onMounted(() => {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding-bottom: 1.14rem;
 }
 
 .map-wrap {
@@ -826,13 +954,13 @@ onMounted(() => {
 .date-type-wrap {
   display: flex;
   align-items: center;
-  padding-top: 1.2rem;
+  padding-top: 12px;
   .date-type {
     background: #f5f7fb;
-    min-width: 3.84rem;
+    min-width: 54px;
     border-radius: 50px;
     padding: 4px 14px;
-    margin-right: 1.2rem;
+    margin-right: 16px;
     color: #858b9c;
     font-size: 12px;
     text-align: center;
@@ -853,7 +981,7 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.1rem 0;
+    padding: 12px 0;
     border-bottom: 1px solid #f5f7fb;
     .car-info {
       display: flex;
@@ -862,6 +990,24 @@ onMounted(() => {
         width: 50px;
         height: 32px;
         margin-right: 8px;
+      }
+    }
+    .choose-car {
+      display: flex;
+      align-items: center;
+      color: #858b9c;
+      font-size: 12px;
+      .choose {
+        color: #1985fb;
+      }
+      .right {
+        height: 0;
+        width: 0;
+        margin: 2px 0 0 4px;
+        border-left: 5px solid #858b9c;
+        border-right: 5px solid transparent;
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
       }
     }
     .name {
@@ -874,23 +1020,6 @@ onMounted(() => {
       display: flex;
       justify-content: space-between;
       align-items: center;
-    }
-    .car-checkbox {
-      height: 20px;
-      width: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2px;
-      box-sizing: border-box;
-      border-radius: 4px;
-      border: 2px solid #c5cad5;
-      margin-left: 14px;
-    }
-    .checked {
-      background-color: #467ef7;
-      color: #ffffff;
-      border: unset;
     }
     .price,
     .favorable {
@@ -914,7 +1043,7 @@ onMounted(() => {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: 12px;
+    padding: 10px;
     font-weight: 700;
     color: #41485d;
     border-bottom: 1px solid #f5f7fb;
@@ -927,7 +1056,7 @@ onMounted(() => {
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
-      font-size: 0.86rem;
+      font-size: 12px;
     }
     .item {
       display: flex;
@@ -956,7 +1085,7 @@ onMounted(() => {
     border-radius: 10px;
     color: #fff;
     background: #3d1a00;
-    padding-left: 1.14rem;
+    padding-left: 16px;
     .bottom-btn {
       border-radius: 10px;
       background: linear-gradient(90deg, #f3741f 0%, #f4b809 100%);
@@ -969,24 +1098,91 @@ onMounted(() => {
       padding: 4px 0;
     }
     .bottom-price {
-      font-size: 1.14rem;
+      font-size: 16px;
       font-weight: 900;
       padding: 0 3px;
       margin-bottom: 2px;
     }
     .bottom-choose {
-      font-size: 0.714rem;
+      font-size: 12px;
     }
+  }
+}
+.popup-carlist {
+  padding: 12px;
+  border-radius: 6px;
+  background: #f5f7fb;
+  height: fit-content;
+  max-height: 50%;
+  .total-price {
+    font-weight: 700;
+    font-size: 16px;
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    img {
+      width: 16px;
+      height: 16px;
+    }
+  }
+  .choosed-car {
+    color: #858b9c;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #f5f7fb;
+    .all-choose {
+      display: flex;
+      align-items: center;
+    }
+  }
+  .subcar-list {
+    border-radius: 6px;
+    .car-img {
+      width: 30px;
+      height: 30px;
+    }
+    .info-icon {
+      width: 14px;
+      height: 14px;
+    }
+  }
+  .div-btn {
+    margin-top: 10px;
+    text-align: center;
+    background-color: #003f93;
+    border-radius: 10px;
+    color: #ffffff;
+    padding: 6px 8px;
   }
 }
 #trajectory-wrap {
   position: relative;
   width: 100%;
-  min-height: 13.93rem; /* 195/14 ≈ 13.93 */
+  min-height: 195px;
   :deep(.amap-logo),
   :deep(.amap-copyright) {
     display: none !important;
     opacity: 0 !important;
   }
+}
+.car-checkbox {
+  height: 20px;
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  box-sizing: border-box;
+  border-radius: 4px;
+  border: 2px solid #c5cad5;
+  margin-left: 14px;
+}
+.checked {
+  background-color: #467ef7;
+  color: #ffffff;
+  border: unset;
 }
 </style>

@@ -510,7 +510,7 @@ const handleSelectPOI = (item) => {
   background: #f5f7fb;
 }
 .search-wrap {
-  padding: 16px;
+  padding: 12px;
   background: #ffffff;
   border-radius: 0px 0px 20px 20px;
 }
@@ -527,7 +527,7 @@ const handleSelectPOI = (item) => {
     position: relative;
     display: flex;
     align-items: center;
-    padding: 0 10px;
+    padding: 0 8px;
     background: #f5f7fb;
     border-radius: 10px;
     border: 1px solid #3475f5;

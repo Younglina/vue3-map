@@ -85,6 +85,7 @@ const setCarType = (type) => {
   currentCarType.value = type;
   window.localStorage.setItem("CAR_TYPE", type);
 };
+setCarType("firm");
 
 const homeAddress = ref({
   addressName: "",

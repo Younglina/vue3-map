@@ -6,11 +6,18 @@ let url = "";
 let data = "";
 switch (page) {
   case "ZSX_ORDER_CONFIRM":
-    url = "/pages/chooseArea/orderConfirm";
+    url = "/pages/order/confirm";
     data = JSON.parse(
       localStorage.getItem("ZSX_ORDER_CONFIRM") || '{"_NODATA": true}'
     );
     data._ZSX_PAGE_KEY = "ZSX_ORDER_CONFIRM";
+    break;
+  case "ZSX_PRICEINFO":
+    url = "/pages/trajectory/priceInfo";
+    data = JSON.parse(
+      localStorage.getItem("ZSX_PRICEINFO") || '{"_NODATA": true}'
+    );
+    data._ZSX_PAGE_KEY = "ZSX_PRICEINFO";
     break;
 }
 if (url) {

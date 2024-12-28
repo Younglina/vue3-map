@@ -16,80 +16,89 @@ const mapLoaded = (m) => {
 const orderDetail = reactive({});
 function getOrderDetail(logId) {
   // let interval = setInterval(() => {
-  request({
-    url: "/app/common/order/get",
-    method: "POST",
-    headers: {
-      Authorization: route.query.token,
+  // request({
+  //   url: "/app/common/order/get",
+  //   method: "POST",
+  //   headers: {
+  //     Authorization: route.query.token,
+  //   },
+  //   data: {
+  //     logId,
+  //   },
+  // }).then((res) => {
+  const res = {
+    orderNo: "2024122800010520000044",
+    passengerId: "1872173744031252481",
+    orderTime: "2024-12-28 07:52:28",
+    orderState: "4",
+    orderStateStr: "待派车",
+    orderSource: null,
+    orderAmount: null,
+    businessType: "5",
+    arrangedTips: null,
+    order: {
+      logId: "1872913492504035329",
+      passengerId: "1872173744031252481",
+      orderPersonPhone: "15179816883",
+      orderPersonDeptName: null,
+      orderPersonOrgName: null,
+      orderPersonName: "6883",
+      passengerPhone: "15166666666",
+      passengerName: "wzq",
+      orderTime: "2024-12-28 07:52:28",
+      orderState: "1",
+      useCarTime: "2024-12-28 15:52:24",
+      useCarReason: "",
+      orderType: "2",
+      onlinePay: null,
+      rentDuration: "12",
+      dispatchType: "2",
+      placeOrderType: "2",
+      startLngtitude: 120.211784,
+      startLatitude: 30.208879,
+      startAddress: "高新区(滨江)公安分局",
+      startAddressFull: "",
+      endLngtitude: 120.223401,
+      endLatitude: 30.220748,
+      endAddress: "印月尚庭(西北门)",
+      endAddressFull: "丹枫路86号印月尚庭",
+      approvalNo: "",
+      togetherOrder: "0",
+      orderNo: "2024122800010520000044",
+      remark: null,
+      businessType: "5",
+      chooseBusinessType: "5",
+      businessId: null,
+      cancelType: null,
+      cancelDesc: null,
+      cancelTime: null,
+      createUserId: "1872173747813265410",
+      orgId: "1",
+      orgName: null,
+      orderSource: "2",
+      dispatchSource: "5",
+      driverId: null,
+      vehicleId: null,
+      togetherList: null,
+      midwayPoint: null,
+      channelId: null,
+      vehicleModelLevel: null,
+      partnerOrderId: null,
+      partnerCarTypeId: null,
+      partnerEstimateId: null,
+      partnerEstimateAmount: null,
     },
-    data: {
-      logId,
-    },
-  }).then((res) => {
-    // const res = {
-    //   orderNo: "2024122300020510001535,2024122300023310000451",
-    //   passengerId: "1844637171561308161",
-    //   orderTime: "2024-12-23 05:36:58",
-    //   orderState: "1",
-    //   orderStateStr: null,
-    //   orderSource: null,
-    //   orderAmount: null,
-    //   businessType: "5",
-    //   arrangedTips: null,
-    //   order: {
-    //     logId: "1871067455328141313",
-    //     passengerId: "1844637171561308161",
-    //     orderPersonPhone: "15179816883",
-    //     orderPersonDeptName: null,
-    //     orderPersonOrgName: null,
-    //     orderPersonName: "6883",
-    //     passengerPhone: "15179811111",
-    //     passengerName: "1111",
-    //     orderTime: "2024-12-23 05:36:58",
-    //     orderState: "101",
-    //     useCarTime: "2024-12-23 13:36:50",
-    //     useCarReason: "送领文件",
-    //     orderType: "1",
-    //     rentDuration: "12",
-    //     dispatchType: "0",
-    //     placeOrderType: "2",
-    //     startLngtitude: 120.211784,
-    //     startLatitude: 30.208879,
-    //     startAddress: "高新区(滨江)公安分局",
-    //     startAddressFull: "",
-    //     endLngtitude: 120.223401,
-    //     endLatitude: 30.220748,
-    //     endAddress: "印月尚庭(西北门)",
-    //     endAddressFull: "丹枫路86号印月尚庭",
-    //     approvalNo: null,
-    //     togetherOrder: "0",
-    //     orderNo: "2024122300020510001535,2024122300023310000451",
-    //     businessType: "5,33",
-    //     chooseBusinessType: "5,33",
-    //     businessId: "2024122313370502406",
-    //     cancelType: "2",
-    //     cancelDesc: "系统取消",
-    //     cancelTime: "2024-12-23 05:57:05",
-    //     createUserId: "1844637172337127425",
-    //     orgId: "1",
-    //     orgName: null,
-    //     orderSource: "2",
-    //     dispatchSource: "5,33",
-    //     driverId: null,
-    //     vehicleId: null,
-    //     togetherList: null,
-    //   },
-    // };
-    console.log(res);
-    Object.assign(orderDetail, res);
-    if (
-      orderDetail.orderNo &&
-      ["100", "101", "102"].includes(orderDetail.orderState)
-    ) {
-      // clearInterval(interval);
-      // interval = null;
-    }
-  });
+  };
+  console.log(res);
+  Object.assign(orderDetail, res);
+  if (
+    orderDetail.orderNo &&
+    ["100", "101", "102"].includes(orderDetail.orderState)
+  ) {
+    // clearInterval(interval);
+    // interval = null;
+  }
+  // });
   // }, 3000);
 }
 
@@ -282,13 +291,13 @@ const route = useRoute();
 onMounted(() => {
   getOrderDetail(route.query.logId);
   // axios("/api/signature?url=" + encodeURIComponent(window.location.href));
-  const appdsata = {
-    appId: "wxc6f5cb56394f1ae0",
-    nonceStr: "YWW5ZIXLWlvYno4I",
-    timestamp: 1735182029,
-    signature: "67920b72be7d7496544c755bebacb2c4c037fcdc",
-    url: "http://localhost:5173/#/orderDetail?logId=1871799246868889602&token=MTUxNzk4MTY4ODN8emgwMDAwMnwyMDI0LTEyLTI1IDE3OjI1OjA4",
-  };
+  // const appdsata = {
+  //   appId: "wxc6f5cb56394f1ae0",
+  //   nonceStr: "YWW5ZIXLWlvYno4I",
+  //   timestamp: 1735182029,
+  //   signature: "67920b72be7d7496544c755bebacb2c4c037fcdc",
+  //   url: "http://localhost:5173/#/orderDetail?logId=1871799246868889602&token=MTUxNzk4MTY4ODN8emgwMDAwMnwyMDI0LTEyLTI1IDE3OjI1OjA4",
+  // };
   getCancelReason();
   // request({
   //   url: "/app/hailing/order/path/planning/info",
@@ -418,18 +427,18 @@ onMounted(() => {
       </div>
       <div class="paidan-wrap" v-if="orderDetail.orderState == '1'">
         <div>
-          <div>
-            正在同时呼叫{{ orderDetail.businessType.split(",").length }}个车型
-          </div>
+          <div>正在同时呼叫{{ orderDetail.totalChooseCarTypeNum }}个车型</div>
           <div>经济型1</div>
         </div>
         <div class="div-btn" @click="cancelOrder('show')">取消订单</div>
       </div>
     </div>
-    <!-- v-if="
+    <div
+      v-if="
         ['0', '2', '3', '4', '5', '6', '100'].includes(orderDetail.orderState)
-      " -->
-    <div class="order-btns">
+      "
+      class="order-btns"
+    >
       <div class="action-btn" @click="cancelOrder('show')">
         <img src="@/assets/close.svg" alt="" />
         <span>取消订单</span>

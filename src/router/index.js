@@ -1,5 +1,5 @@
 import { createRouter, createWebHashHistory } from "vue-router";
-import AMap from "../components/AMap.vue";
+import MapChoose from "../views/mapChoose.vue";
 import Home from "../views/home.vue";
 import SearchPage from "../components/SearchPage.vue";
 import Transfer from "../views/transfer.vue";
@@ -13,6 +13,14 @@ const routes = [
     component: Home,
     meta: {
       title: "掌上行",
+    },
+  },
+  {
+    path: "/mapChoose",
+    name: "MapChoose",
+    component: MapChoose,
+    meta: {
+      title: "地图选点",
     },
   },
   {
