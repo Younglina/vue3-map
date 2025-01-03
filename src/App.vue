@@ -34,7 +34,7 @@ body {
   background-color: #ffffff;
   box-shadow: 5px -5px 10px #e8e8e8, -5px 5px 10px #ffffff;
 
-  & > div {
+  .btn {
     display: flex;
     position: relative;
     flex: 1;
@@ -45,6 +45,11 @@ body {
     border-radius: 10px;
     color: #ffffff;
     margin: 0 10px;
+  }
+
+  .min-btn{
+    flex: unset;
+    padding: 0 20px;
   }
 }
 </style>

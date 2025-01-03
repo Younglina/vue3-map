@@ -12,7 +12,7 @@ const routes = [
     name: "Home",
     component: Home,
     meta: {
-      title: "掌上行",
+      title: "首页",
     },
   },
   {
@@ -28,7 +28,7 @@ const routes = [
     name: "Search",
     component: SearchPage,
     meta: {
-      title: "掌上行",
+      title: "地址搜索",
     },
   },
   {

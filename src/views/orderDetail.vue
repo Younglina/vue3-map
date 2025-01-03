@@ -13,6 +13,12 @@ const mapLoaded = (m) => {
   map = m;
 };
 
+const businessData = {
+  fastCar: "快车",
+  specialCar: "专车",
+  taxi: "出租车",
+};
+
 const orderDetail = reactive({});
 function getOrderDetail(logId) {
   // let interval = setInterval(() => {
@@ -30,7 +36,7 @@ function getOrderDetail(logId) {
     orderNo: "2024122800010520000044",
     passengerId: "1872173744031252481",
     orderTime: "2024-12-28 07:52:28",
-    orderState: "4",
+    orderState: "5",
     orderStateStr: "待派车",
     orderSource: null,
     orderAmount: null,
@@ -82,7 +88,7 @@ function getOrderDetail(logId) {
       togetherList: null,
       midwayPoint: null,
       channelId: null,
-      vehicleModelLevel: null,
+      vehicleModelLevel: "specialCar",
       partnerOrderId: null,
       partnerCarTypeId: null,
       partnerEstimateId: null,
@@ -227,6 +233,14 @@ function cancelOrder(type) {
     showCancleDialog.value = false;
     chooseReason.value = "";
   }
+}
+
+function callDriver() {
+  wx.miniProgram.navigateTo({
+    url: `/pages/transfer/index?makePhoneCall=${
+      orderDetail.order.driverPhone || "968845"
+    }`,
+  });
 }
 
 function callPolice() {
@@ -381,6 +395,32 @@ onMounted(() => {
   console.log(res);
   //   });
 });
+
+// ("1", "微信"),
+// ("2", "支付宝"),
+// ("5", "现金"),
+// ("8", "单位结算"),
+// ("11", "银联云闪付"),
+// ("24","全民付-微信"),
+// ("25","全民付-支付宝"),
+// ("26","全民付-云闪付"),
+
+function handlePay(){
+  request({
+    url: "/app/hailing/order/pay",
+    method: "POST",
+    headers: {
+      Authorization: route.query.token,
+    },
+    data: {
+      logId: orderDetail.orderNo,
+      payType:1 ,
+      
+    },
+  }).then((res) => {
+    console.log(res);
+  });
+}
 </script>
 <template>
   <div v-if="orderDetail.orderNo" class="order-detail-wrap">
@@ -404,6 +444,21 @@ onMounted(() => {
         <img src="@/assets/haixia.png" alt="" />
       </div>
       <div
+        v-if="['5', '6'].includes(orderDetail.orderState)"
+        class="c-card price-wrap"
+      >
+        <div>价格明细</div>
+        <div class="item">
+          <span>订单总额</span>
+          <div>
+            <span class="price">{{
+              orderDetail.order.orderAmount || "20.00"
+            }}</span
+            >元
+          </div>
+        </div>
+      </div>
+      <div
         class="car-info-wrap"
         v-if="
           ['0', '2', '3', '4', '5', '6', '100'].includes(orderDetail.orderState)
@@ -411,7 +466,9 @@ onMounted(() => {
       >
         <div>
           <div class="car-type-info">
-            <span class="car-type">经济型</span>
+            <span class="car-type">{{
+              businessData[orderDetail.order.vehicleModelLevel]
+            }}</span>
             <span class="car-type-name">曹操出行</span>
           </div>
           <div class="car-num">赣BU13EI</div>
@@ -420,7 +477,7 @@ onMounted(() => {
             <span class="car-dirver">周师傅</span>
           </div>
         </div>
-        <div class="car-phone">
+        <div class="car-phone" @click="callDriver">
           <img src="@/assets/phoneCall.svg" alt="" />
           <span>打电话</span>
         </div>
@@ -600,6 +657,13 @@ onMounted(() => {
     >
       <div class="btn" @click="handleReOrder">重新寻车</div>
     </div>
+    <div class="bottom-wrap" v-if="['5'].includes(orderDetail.orderState)">
+      <div>
+        总额<span class="price">{{ orderDetail.totalPrice || "20" }}</span
+        >元
+      </div>
+      <div class="btn min-btn" @click="handlePay">去支付</div>
+    </div>
 
     <van-dialog
       v-model:show="showCancleDialog"
@@ -631,7 +695,19 @@ onMounted(() => {
   flex-direction: column;
   background: #f5f7fb;
 }
-
+.price-wrap {
+  display: flex;
+  flex-direction: column;
+  .item {
+    display: flex;
+    justify-content: space-between;
+  }
+}
+.price {
+  font-size: 18px;
+  font-weight: 700;
+  padding: 0 2px;
+}
 .state-wrap {
   background-image: linear-gradient(
     180deg,
