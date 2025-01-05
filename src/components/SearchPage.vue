@@ -371,7 +371,7 @@ const handleSelectPOI = (item) => {
     });
   }
 
-  if (["home", "company"].includes(route.query.type)) {
+  if (["home", "company", "custom"].includes(route.query.type)) {
     let url = "/app/hailing/passenger/address/add";
     const areaData = {
       addressName: item.name,
@@ -379,7 +379,7 @@ const handleSelectPOI = (item) => {
       address: item.address,
       lngtitude: longitude,
       latitude,
-      placeType: route.query.type === "home" ? 1 : 2,
+      placeType: route.query.type === "home" ? 1 : route.query.type === "company" ? 2 : 3,
     };
     if (route.query.addressId && route.query.addressId !== "undefined") {
       areaData.addressId = route.query.addressId;
