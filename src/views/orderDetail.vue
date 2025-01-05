@@ -6,7 +6,7 @@ import { useRoute, useRouter } from "vue-router";
 import request from "@/utils/request";
 import AMap from "@/components/AMap.vue";
 import { showToast } from "vant";
-import axios from "axios";
+import towgs84 from "@/utils/towgs84";
 
 let map = null;
 const mapLoaded = (m) => {
@@ -20,101 +20,121 @@ const businessData = {
 };
 
 const orderDetail = reactive({});
-function getOrderDetail(logId) {
-  // let interval = setInterval(() => {
-  // request({
-  //   url: "/app/common/order/get",
-  //   method: "POST",
-  //   headers: {
-  //     Authorization: route.query.token,
-  //   },
-  //   data: {
-  //     logId,
-  //   },
-  // }).then((res) => {
-  const res = {
-    orderNo: "2024122800010520000044",
-    passengerId: "1872173744031252481",
-    orderTime: "2024-12-28 07:52:28",
-    orderState: "5",
-    orderStateStr: "待派车",
-    orderSource: null,
-    orderAmount: null,
-    businessType: "5",
-    arrangedTips: null,
-    order: {
-      logId: "1872913492504035329",
-      passengerId: "1872173744031252481",
-      orderPersonPhone: "15179816883",
-      orderPersonDeptName: null,
-      orderPersonOrgName: null,
-      orderPersonName: "6883",
-      passengerPhone: "15166666666",
-      passengerName: "wzq",
-      orderTime: "2024-12-28 07:52:28",
-      orderState: "1",
-      useCarTime: "2024-12-28 15:52:24",
-      useCarReason: "",
-      orderType: "2",
-      onlinePay: null,
-      rentDuration: "12",
-      dispatchType: "2",
-      placeOrderType: "2",
-      startLngtitude: 120.211784,
-      startLatitude: 30.208879,
-      startAddress: "高新区(滨江)公安分局",
-      startAddressFull: "",
-      endLngtitude: 120.223401,
-      endLatitude: 30.220748,
-      endAddress: "印月尚庭(西北门)",
-      endAddressFull: "丹枫路86号印月尚庭",
-      approvalNo: "",
-      togetherOrder: "0",
-      orderNo: "2024122800010520000044",
-      remark: null,
-      businessType: "5",
-      chooseBusinessType: "5",
-      businessId: null,
-      cancelType: null,
-      cancelDesc: null,
-      cancelTime: null,
-      createUserId: "1872173747813265410",
-      orgId: "1",
-      orgName: null,
-      orderSource: "2",
-      dispatchSource: "5",
-      driverId: null,
-      vehicleId: null,
-      togetherList: null,
-      midwayPoint: null,
-      channelId: null,
-      vehicleModelLevel: "specialCar",
-      partnerOrderId: null,
-      partnerCarTypeId: null,
-      partnerEstimateId: null,
-      partnerEstimateAmount: null,
-    },
-  };
-  console.log(res);
-  Object.assign(orderDetail, res);
-  if (
-    orderDetail.orderNo &&
-    ["100", "101", "102"].includes(orderDetail.orderState)
-  ) {
-    // clearInterval(interval);
-    // interval = null;
-  }
-  // });
-  // }, 3000);
+function getOrderDetail(logId, orderNo) {
+  let interval = setInterval(() => {
+    request({
+      url: "/app/common/order/get",
+      method: "POST",
+      headers: {
+        Authorization: route.query.token,
+      },
+      data: {
+        logId,
+        orderNo,
+      },
+    }).then((res) => {
+      // const res = {
+      //   orderNo: "2024122800010520000044",
+      //   passengerId: "1872173744031252481",
+      //   orderTime: "2024-12-28 07:52:28",
+      //   orderState: "4",
+      //   orderStateStr: "待派车",
+      //   orderSource: null,
+      //   orderAmount: null,
+      //   businessType: "5",
+      //   arrangedTips: null,
+      //   order: {
+      //     logId: "1872913492504035329",
+      //     passengerId: "1872173744031252481",
+      //     orderPersonPhone: "15179816883",
+      //     orderPersonDeptName: null,
+      //     orderPersonOrgName: null,
+      //     orderPersonName: "6883",
+      //     passengerPhone: "15166666666",
+      //     passengerName: "wzq",
+      //     orderTime: "2024-12-28 07:52:28",
+      //     orderState: "1",
+      //     useCarTime: "2024-12-28 15:52:24",
+      //     useCarReason: "",
+      //     orderType: "2",
+      //     onlinePay: null,
+      //     rentDuration: "12",
+      //     dispatchType: "2",
+      //     placeOrderType: "2",
+      //     startLngtitude: 120.211784,
+      //     startLatitude: 30.208879,
+      //     startAddress: "高新区(滨江)公安分局",
+      //     startAddressFull: "",
+      //     endLngtitude: 120.223401,
+      //     endLatitude: 30.220748,
+      //     endAddress: "印月尚庭(西北门)",
+      //     endAddressFull: "丹枫路86号印月尚庭",
+      //     approvalNo: "",
+      //     togetherOrder: "0",
+      //     orderNo: "2024122800010520000044",
+      //     remark: null,
+      //     businessType: "5",
+      //     chooseBusinessType: "5",
+      //     businessId: null,
+      //     cancelType: null,
+      //     cancelDesc: null,
+      //     cancelTime: null,
+      //     createUserId: "1872173747813265410",
+      //     orgId: "1",
+      //     orgName: null,
+      //     orderSource: "2",
+      //     dispatchSource: "5",
+      //     driverId: null,
+      //     vehicleId: null,
+      //     togetherList: null,
+      //     midwayPoint: null,
+      //     channelId: null,
+      //     vehicleModelLevel: null,
+      //     partnerOrderId: null,
+      //     partnerCarTypeId: null,
+      //     partnerEstimateId: null,
+      //     partnerEstimateAmount: null,
+      //   },
+      // };
+      console.log(res);
+      [res.order.startLatitude, res.order.startLngtitude] =
+        towgs84.transformWGS2GCJ(
+          res.order.startLatitude,
+          res.order.startLngtitude
+        );
+      [res.order.endLatitude, res.order.endLngtitude] =
+        towgs84.transformWGS2GCJ(res.order.endLatitude, res.order.endLngtitude);
+      Object.assign(orderDetail, res);
+      if (
+        orderDetail.orderNo &&
+        ["100", "101", "102"].includes(orderDetail.orderState)
+      ) {
+        clearInterval(interval);
+        interval = null;
+      }
+    });
+  }, 3000);
 }
 
 const router = useRouter();
 function handleReOrder() {
-  const orderData = orderDetail.order;
+  const orderData = JSON.parse(JSON.stringify(orderDetail.order));
   if (orderData.orderState === "101") {
     orderData.overTimeOrder = "1";
     orderData.overTimeApprovalNo = orderData.approvalNo;
   }
+  const fromwgs84 = towgs84.transformGCJ2WGS(
+    orderData.startLatitude,
+    orderData.startLngtitude
+  );
+  const endwgs84 = towgs84.transformGCJ2WGS(
+    orderData.endLatitude,
+    orderData.endLngtitude
+  );
+  orderData.startLngtitude = fromwgs84[1];
+  orderData.startLatitude = fromwgs84[0];
+  orderData.endLngtitude = endwgs84[1];
+  orderData.endLatitude = endwgs84[0];
   // if (orderData.orderState === "101") {
   //   request({
   //     url: "/app/common/overTime/order/againAdd",
@@ -155,7 +175,7 @@ function handleReOrder() {
         logId: res.logId,
       },
     });
-    getOrderDetail(res.logId);
+    getOrderDetail(res.logId, res.orderNo);
   });
   // }
 }
@@ -303,7 +323,7 @@ const contactService = () => {
 
 const route = useRoute();
 onMounted(() => {
-  getOrderDetail(route.query.logId);
+  getOrderDetail(route.query.logId, route.query.orderNo);
   // axios("/api/signature?url=" + encodeURIComponent(window.location.href));
   // const appdsata = {
   //   appId: "wxc6f5cb56394f1ae0",
@@ -336,63 +356,7 @@ onMounted(() => {
   //     phone: "15179816883",
   //   },
   // }).then((res) => {
-  const res = [
-    {
-      orderNo: "2024122300020510001535,2024122300023310000451",
-      passengerId: "1844637171561308161",
-      orderTime: "2024-12-23 05:36:58",
-      orderState: "1",
-      orderStateStr: null,
-      orderSource: null,
-      orderAmount: null,
-      businessType: "5,33",
-      arrangedTips: null,
-      order: {
-        logId: "1871067455328141313",
-        passengerId: "1844637171561308161",
-        orderPersonPhone: "15179816883",
-        orderPersonDeptName: null,
-        orderPersonOrgName: null,
-        orderPersonName: "6883",
-        passengerPhone: "15179811111",
-        passengerName: "1111",
-        orderTime: "2024-12-23 05:36:58",
-        orderState: "1",
-        useCarTime: "2024-12-23 13:36:50",
-        useCarReason: "送领文件",
-        orderType: "1",
-        rentDuration: "12",
-        dispatchType: "0",
-        placeOrderType: "2",
-        startLngtitude: 120.211784,
-        startLatitude: 30.208879,
-        startAddress: "高新区(滨江)公安分局",
-        startAddressFull: null,
-        endLngtitude: 120.223401,
-        endLatitude: 30.220748,
-        endAddress: "印月尚庭(西北门)",
-        endAddressFull: null,
-        approvalNo: null,
-        togetherOrder: null,
-        orderNo: "2024122300020510001535,2024122300023310000451",
-        businessType: "5,33",
-        chooseBusinessType: null,
-        businessId: "2024122313370502406",
-        cancelType: null,
-        cancelDesc: null,
-        cancelTime: null,
-        createUserId: "1844637172337127425",
-        orgId: "1",
-        orgName: null,
-        orderSource: "2",
-        dispatchSource: "5,33",
-        driverId: null,
-        vehicleId: null,
-        togetherList: null,
-      },
-    },
-  ];
-  console.log(res);
+  // console.log(res);
   //   });
 });
 
@@ -405,7 +369,7 @@ onMounted(() => {
 // ("25","全民付-支付宝"),
 // ("26","全民付-云闪付"),
 
-function handlePay(){
+function handlePay() {
   request({
     url: "/app/hailing/order/pay",
     method: "POST",
@@ -414,8 +378,7 @@ function handlePay(){
     },
     data: {
       logId: orderDetail.orderNo,
-      payType:1 ,
-      
+      payType: 1,
     },
   }).then((res) => {
     console.log(res);

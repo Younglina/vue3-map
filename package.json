@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@amap/amap-jsapi-loader": "^1.0.1",
+    "@stomp/stompjs": "^7.0.0",
     "axios": "^1.7.9",
     "moment": "^2.30.1",
     "sass": "^1.83.0",

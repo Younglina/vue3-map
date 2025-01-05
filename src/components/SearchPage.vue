@@ -336,7 +336,7 @@ const handleSelectPOI = (item) => {
   }
   if (route.query.type === "from") {
     router.push({
-      path: "/home",
+      path: `/home/${new Date().getTime()}`,
       query: {
         longitude,
         latitude,
@@ -348,7 +348,7 @@ const handleSelectPOI = (item) => {
     });
   }
   if (route.query.type === "to") {
-    wx.miniProgram.navigateTo({
+    wx.miniProgram.redirectTo({
       url: `/pages/trajectory/index?flng=${route.query.longitude}&flat=${
         route.query.latitude
       }&fname=${encodeURIComponent(
