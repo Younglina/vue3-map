@@ -361,7 +361,7 @@ const toPriceInfoPage = (item, vehicleModelLevel) => {
     "ZSX_PRICEINFO",
     JSON.stringify({ ...item, vehicleModelLevel })
   );
-  wx.miniProgram.navigateTo({
+  wx.miniProgram.redirectTo({
     url: `/pages/transfer/index?page=ZSX_PRICEINFO`,
   });
 };

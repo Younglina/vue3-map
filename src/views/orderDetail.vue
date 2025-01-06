@@ -7,10 +7,83 @@ import request from "@/utils/request";
 import AMap from "@/components/AMap.vue";
 import { showToast } from "vant";
 import towgs84 from "@/utils/towgs84";
+import startIcon from "@/assets/startIcon.png";
+import endIcon from "@/assets/endIcon.png";
 
 let map = null;
+let AMapObj = null;
+const route = useRoute();
 const mapLoaded = (m) => {
-  map = m;
+  console.log(m)
+  map = m.map;
+  AMapObj = m.AMap;
+// 创建起点和终点标记
+  const startMarker = new AMapObj.Marker({
+  position: [route.query.flng, route.query.flat],
+  icon: new AMapObj.Icon({
+    size: new AMapObj.Size(34, 34),
+    image: startIcon,
+    imageSize: new AMapObj.Size(34, 34),
+  }),
+  offset: new AMapObj.Pixel(-12, -34),
+});
+
+const endMarker = new AMapObj.Marker({
+  position: [route.query.tlng, route.query.tlat],
+  icon: new AMapObj.Icon({
+    size: new AMapObj.Size(34, 34),
+    image: endIcon,
+    imageSize: new AMapObj.Size(34, 34),
+  }),
+  offset: new AMapObj.Pixel(-12, -34),
+});
+// 创建文本标记
+const startText = new AMapObj.Text({
+  text: `<div style="display:flex;align-items:center;"><div style="font-size:0.86rem;width: 100px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;font-weight: 700">${route.query.faddress}</div></div>`,
+  anchor: "bottom-center",
+  position: [route.query.flng, route.query.flat],
+  style: {
+    padding: "5px 10px",
+    "background-color": "#fff",
+    "border-radius": "16px",
+    "border-width": 0,
+    "box-shadow": "0 2px 6px rgba(0,0,0,0.1)",
+    color: "#333",
+    "font-size": "12px",
+    "min-width": "116px",
+    "text-align": "center",
+  },
+  offset: new AMapObj.Pixel(0, -32),
+});
+
+const endText = new AMapObj.Text({
+  text: `<div style="display:flex;align-items:center;"><div style="font-size:0.86rem;width: 100px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;font-weight: 700">${route.query.taddress}</div></div>`,
+  anchor: "bottom-center",
+  position: [route.query.tlng, route.query.tlat],
+  style: {
+    padding: "5px 10px",
+    "background-color": "#fff",
+    "border-radius": "16px",
+    "border-width": 0,
+    "box-shadow": "0 2px 6px rgba(0,0,0,0.1)",
+    color: "#333",
+    "font-size": "12px",
+    "min-width": "80px",
+    "text-align": "center",
+  },
+  offset: new AMapObj.Pixel(0, -32),
+});
+map.add(startMarker);
+map.add(endMarker);
+map.add(startText);
+map.add(endText);
+
+map.setFitView(
+  [startMarker, endMarker],
+  true,
+  [75, 75, 75, 80],
+  17
+);
 };
 
 const businessData = {
@@ -321,7 +394,6 @@ const contactService = () => {
     });
 };
 
-const route = useRoute();
 onMounted(() => {
   getOrderDetail(route.query.logId, route.query.orderNo);
   // axios("/api/signature?url=" + encodeURIComponent(window.location.href));

@@ -15,7 +15,7 @@ const mapData = reactive({
 
 let map = null;
 const mapLoaded = (m) => {
-  map = m;
+  map = m.map;
   if (route.query.longitude && route.query.latitude) {
     map.setCenter([route.query.longitude, route.query.latitude]);
     setArea(route.query);

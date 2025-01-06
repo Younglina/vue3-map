@@ -347,7 +347,7 @@ const handleSelectPOI = (item) => {
       },
     });
   }
-  if (route.query.type === "to") {
+  else if (route.query.type === "to") {
     wx.miniProgram.redirectTo({
       url: `/pages/trajectory/index?flng=${route.query.longitude}&flat=${
         route.query.latitude
@@ -361,7 +361,7 @@ const handleSelectPOI = (item) => {
     });
   }
 
-  if (route.query.type === "addPoint") {
+  else  if (route.query.type === "addPoint") {
     wx.miniProgram.redirectTo({
       url: `/pages/trajectory/addPoint?name=${encodeURIComponent(
         item.name
@@ -371,7 +371,7 @@ const handleSelectPOI = (item) => {
     });
   }
 
-  if (["home", "company", "custom"].includes(route.query.type)) {
+  else  if (["home", "company", "custom"].includes(route.query.type)) {
     let url = "/app/hailing/passenger/address/add";
     const areaData = {
       addressName: item.name,

@@ -104,7 +104,7 @@ const initMap = async ({ longitude, latitude }) => {
         currentAddress.value = { name: "正在定位." };
       });
       map.on("dragend", handleMapDragEnd);
-      emit("loaded", map);
+      emit("loaded", {AMap, map});
       getPOIByLocation([longitude, latitude]);
     })
     .catch((e) => {
