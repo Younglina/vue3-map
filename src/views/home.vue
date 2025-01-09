@@ -1,6 +1,7 @@
 <script setup>
 import AMap from "../components/AMap.vue";
 import request from "@/utils/request";
+import gwcIcon from "@/assets/gwc.png";
 import { watch, reactive, ref } from "vue";
 import { useRoute } from "vue-router";
 
@@ -13,9 +14,11 @@ const mapData = reactive({
   markerData: [],
 });
 
+let AMapObj = null;
 let map = null;
 const mapLoaded = (m) => {
   map = m.map;
+  AMapObj = m.AMap;
   if (route.query.longitude && route.query.latitude) {
     map.setCenter([route.query.longitude, route.query.latitude]);
     setArea(route.query);
@@ -40,20 +43,35 @@ const handleLocationInfo = (info) => {
 };
 
 function getNearByCar() {
-  request({
-    url: "/app/common/driver/v2/nearby",
-    method: "POST",
-    headers: {
-      Authorization: route.query.token,
-    },
-    data: {
-      businessType: "11",
-      startLatitude: mapData.latitude,
-      startLongitude: mapData.longitude,
-    },
-  }).then((res) => {
-    console.log(res);
-  });
+  // request({
+  //   url: "/app/common/driver/v2/nearby",
+  //   method: "POST",
+  //   headers: {
+  //     Authorization: route.query.token,
+  //   },
+  //   data: {
+  //     businessType: currentCarType.value === "person" ? "5" : "11",
+  //     startLat: mapData.latitude,
+  //     startLng: mapData.longitude,
+  //     vehicleFreeState: true,
+  //   },
+  // }).then((res) => {
+  //   console.log(res);
+    let res = [{"partnerCarTypeId":"ZSX001","longitude":120.22888244233772,"latitude":30.2022751830219,"direction":0.0,"distance":1801,"duration":null,"partnerDriverId":"1873902006117842946","positionTime":"2025-01-09 23:21:21"}];
+    map.clearMap();
+    const cars = res.map((item) => {
+      return new AMapObj.Marker({
+        position: [item.longitude, item.latitude],
+        icon: new AMapObj.Icon({
+          size: new AMapObj.Size(25, 34),
+          image: gwcIcon,
+          imageSize: new AMapObj.Size(25, 34),
+        }),
+        offset: new AMapObj.Pixel(-12, -34),
+      })
+    });
+    map.add(cars);
+  // });
 }
 
 const handleNavigator = (type) => {

@@ -1,47 +1,64 @@
 <script setup>
+import AMapLoader from "@amap/amap-jsapi-loader";
 import { ref, onMounted, computed, reactive } from "vue";
 import { ORDER_STATUS } from "../utils/constant";
 import moment from "moment";
 import { useRoute, useRouter } from "vue-router";
 import request from "@/utils/request";
-import AMap from "@/components/AMap.vue";
 import { showToast } from "vant";
 import towgs84 from "@/utils/towgs84";
 import startIcon from "@/assets/startIcon.png";
 import endIcon from "@/assets/endIcon.png";
 
 let map = null;
-let AMapObj = null;
-const route = useRoute();
-const mapLoaded = (m) => {
-  console.log(m)
-  map = m.map;
-  AMapObj = m.AMap;
-// 创建起点和终点标记
-  const startMarker = new AMapObj.Marker({
-  position: [route.query.flng, route.query.flat],
-  icon: new AMapObj.Icon({
-    size: new AMapObj.Size(34, 34),
-    image: startIcon,
-    imageSize: new AMapObj.Size(34, 34),
-  }),
-  offset: new AMapObj.Pixel(-12, -34),
-});
+const mapContainer = ref(null);
+let AMap = null;
+window._AMapSecurityConfig = {
+  securityJsCode: "9537a21ee34efb281c3fe92b4f1055bf",
+};
+async function initMap(order) {
+  // 初始化地图
+  AMap = await AMapLoader.load({
+    key: "0f20018974e4ab2189ad2d9f8b0a5702",
+    version: "2.0",
+    plugins: ["AMap.Driving"],
+  });
+  // 创建地图实例
+  map = new AMap.Map(mapContainer.value, {
+    zoom: 17,
+    center: [order.startLngtitude, order.startLatitude],
+  });
+  setStartAndEnd(order);
+}
 
-const endMarker = new AMapObj.Marker({
-  position: [route.query.tlng, route.query.tlat],
-  icon: new AMapObj.Icon({
-    size: new AMapObj.Size(34, 34),
+
+const route = useRoute();
+const setStartAndEnd = (res) => {
+  // 创建起点和终点标记
+  const startMarker = new AMap.Marker({
+    position: [res.startLatitude, res.startLngtitude],
+    icon: new AMap.Icon({
+      size: new AMap.Size(34, 34),
+      image: startIcon,
+      imageSize: new AMap.Size(34, 34),
+    }),
+    offset: new AMap.Pixel(-12, -34),
+  });
+
+const endMarker = new AMap.Marker({
+  position: [res.endLngtitude, res.endLatitude],
+  icon: new AMap.Icon({
+    size: new AMap.Size(34, 34),
     image: endIcon,
-    imageSize: new AMapObj.Size(34, 34),
+    imageSize: new AMap.Size(34, 34),
   }),
-  offset: new AMapObj.Pixel(-12, -34),
+  offset: new AMap.Pixel(-12, -34),
 });
 // 创建文本标记
-const startText = new AMapObj.Text({
-  text: `<div style="display:flex;align-items:center;"><div style="font-size:0.86rem;width: 100px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;font-weight: 700">${route.query.faddress}</div></div>`,
+const startText = new AMap.Text({
+  text: `<div style="display:flex;align-items:center;"><div style="font-size:0.86rem;width: 100px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;font-weight: 700">${res.startAddress}</div></div>`,
   anchor: "bottom-center",
-  position: [route.query.flng, route.query.flat],
+  position: [res.startLngtitude, res.startLatitude],
   style: {
     padding: "5px 10px",
     "background-color": "#fff",
@@ -53,13 +70,13 @@ const startText = new AMapObj.Text({
     "min-width": "116px",
     "text-align": "center",
   },
-  offset: new AMapObj.Pixel(0, -32),
+  offset: new AMap.Pixel(0, -32),
 });
 
-const endText = new AMapObj.Text({
-  text: `<div style="display:flex;align-items:center;"><div style="font-size:0.86rem;width: 100px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;font-weight: 700">${route.query.taddress}</div></div>`,
+const endText = new AMap.Text({
+  text: `<div style="display:flex;align-items:center;"><div style="font-size:0.86rem;width: 100px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;font-weight: 700">${res.endAddress}</div></div>`,
   anchor: "bottom-center",
-  position: [route.query.tlng, route.query.tlat],
+  position: [res.endLngtitude, res.endLatitude],
   style: {
     padding: "5px 10px",
     "background-color": "#fff",
@@ -71,7 +88,7 @@ const endText = new AMapObj.Text({
     "min-width": "80px",
     "text-align": "center",
   },
-  offset: new AMapObj.Pixel(0, -32),
+  offset: new AMap.Pixel(0, -32),
 });
 map.add(startMarker);
 map.add(endMarker);
@@ -105,7 +122,7 @@ function getOrderDetail(logId, orderNo) {
         logId,
         orderNo,
       },
-    }).then((res) => {
+    }).then(async (res) => {
       // const res = {
       //   orderNo: "2024122800010520000044",
       //   passengerId: "1872173744031252481",
@@ -170,6 +187,7 @@ function getOrderDetail(logId, orderNo) {
       //   },
       // };
       console.log(res);
+      const tempOrder = {...res.order};
       [res.order.startLatitude, res.order.startLngtitude] =
         towgs84.transformWGS2GCJ(
           res.order.startLatitude,
@@ -178,15 +196,44 @@ function getOrderDetail(logId, orderNo) {
       [res.order.endLatitude, res.order.endLngtitude] =
         towgs84.transformWGS2GCJ(res.order.endLatitude, res.order.endLngtitude);
       Object.assign(orderDetail, res);
+      if (!AMap && mapContainer.value) {
+        await initMap(tempOrder);
+      }
       if (
         orderDetail.orderNo &&
-        ["100", "101", "102"].includes(orderDetail.orderState)
+        !["1"].includes(orderDetail.orderState)
       ) {
         clearInterval(interval);
         interval = null;
       }
+      if(orderDetail.orderState === "4"){
+        map.clearMap()
+        getPlanInfo(orderDetail.order);
+      }
+
+      if(orderDetail.orderState === "5" || orderDetail.orderState === "6"){
+        getPayParam(orderDetail.order)
+      }
     });
   }, 3000);
+}
+
+function getPayParam(order) {
+  request({
+    url: "/app/pay/order/payParam",
+    method: "POST",
+    headers: {
+      Authorization: route.query.token,
+    },
+    data: {
+      openId: 'wxc6f5cb56394f1ae0',
+      orderNo: order.orderNo,
+      payType: 1,
+      businessType: order.businessType,
+    },
+  }).then((res) => {
+    console.log(res);
+  });
 }
 
 const router = useRouter();
@@ -252,6 +299,95 @@ function handleReOrder() {
   });
   // }
 }
+
+function getPlanInfo(orderDetail) {
+  request({
+    url: "/app/hailing/order/path/planning/info",
+    method: "POST",
+    headers: {
+      Authorization: route.query.token,
+    },
+    data: {
+      phone:orderDetail.passengerPhone,
+      orderNo:orderDetail.orderNo,
+    },
+  }).then((res) => {
+    const {
+      path, ...rest
+    } = res
+    const pathArray =  path.split(';').map(function(item) {
+        var coords = item.split(',');
+        return [parseFloat(coords[1]), parseFloat(coords[0])];
+    }).filter(function(item) { return item[0] && item[1]; });
+    updatePosition(pathArray, {...rest, ...orderDetail});
+  });
+}
+
+const polyline = ref(null);
+let driving = null;
+function updatePosition(pathArray, info) {
+  // if (!polyline.value) {
+  //     polyline.value = new AMap.Polyline({
+  //         path: pathArray,
+  //         strokeColor: "#FF33FF",
+  //         strokeOpacity: 1,
+  //         strokeWeight: 6,
+  //         strokeStyle: "solid",
+  //         geodesic: true
+  //     });
+  //     polyline.value.setMap(map);
+  // } else {
+  //     polyline.value.setPath(pathArray);
+  // }
+
+  // 路径规划
+  driving = new AMap.Driving({
+    map: map,
+    panel: false,
+  });
+  // 规划路线
+  driving.search(
+    [info.longitude, info.latitude],
+    [info.endLngtitude, info.endLatitude],
+    (status, result) => {
+      if (status === "complete") {
+        // 添加路程信息标记
+        const centerText = new AMap.Text({
+          text: `<div style="font-size:12px">距离目的地估计${(info.arriveMileage/1000).toFixed(1)}公里 ${formatDuration(info.arriveTime)}`,
+          anchor: "center",
+          position: [info.longitude, info.latitude],
+          style: {
+            padding: "2px 4px",
+            "background-color": "#666f83",
+            opacity: "80%",
+            "border-radius": "4px",
+            "border-width": 0,
+            color: "#ffffff",
+            "min-width": "128px",
+          },
+        });
+        map.add(centerText);
+        // setTimeout(() => {
+        //   getPlanInfo(info);
+        // }, 3000);
+      }
+    }
+  );
+  // 更新地图中心点以跟随轨迹
+  map.setCenter([info.longitude, info.latitude]);
+}
+const formatDuration = (seconds) => {
+  if (seconds < 60) {
+    return `${seconds}秒`;
+  } else if (seconds < 3600) {
+    const minutes = Math.floor(seconds / 60);
+    return `${minutes}分钟`;
+  } else {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${hours}小时${minutes}分钟`;
+  }
+};
 
 const showStateInfo = computed(() => {
   const s = ORDER_STATUS[orderDetail.orderState];
@@ -394,7 +530,7 @@ const contactService = () => {
     });
 };
 
-onMounted(() => {
+onMounted(async () => {
   getOrderDetail(route.query.logId, route.query.orderNo);
   // axios("/api/signature?url=" + encodeURIComponent(window.location.href));
   // const appdsata = {
@@ -405,31 +541,7 @@ onMounted(() => {
   //   url: "http://localhost:5173/#/orderDetail?logId=1871799246868889602&token=MTUxNzk4MTY4ODN8emgwMDAwMnwyMDI0LTEyLTI1IDE3OjI1OjA4",
   // };
   getCancelReason();
-  // request({
-  //   url: "/app/hailing/order/path/planning/info",
-  //   method: "POST",
-  //   headers: {
-  //     Authorization: route.query.token,
-  //   },
-  //   data: {
-  //     phone: "15179816883",
-  //     orderNo: route.query.orderNo,
-  //   },
-  // }).then((res) => {
-  //   console.log(res);
-  // });
-  // request({
-  //   url: "/app/common/order/underway",
-  //   method: "POST",
-  //   headers: {
-  //     Authorization: route.query.token,
-  //   },
-  //   data: {
-  //     phone: "15179816883",
-  //   },
-  // }).then((res) => {
-  // console.log(res);
-  //   });
+  
 });
 
 // ("1", "微信"),
@@ -458,18 +570,9 @@ function handlePay() {
 }
 </script>
 <template>
-  <div v-if="orderDetail.orderNo" class="order-detail-wrap">
-    <a-map
-      style="min-height: 35vh"
-      @loaded="mapLoaded"
-      :showCenterMarker="false"
-      :showLocationIcon="false"
-      :center="{
-        longitude: orderDetail.order.startLngtitude,
-        latitude: orderDetail.order.startLatitude,
-      }"
-    ></a-map>
-
+  <div class="order-detail-wrap">
+    <div class="map-container" style="min-height: 35vh" id="order-wrap" ref="mapContainer"></div>
+    <template v-if="orderDetail.orderNo">
     <div class="state-wrap">
       <div class="state-info-wrap">
         <div class="state-info">
@@ -719,6 +822,7 @@ function handlePay() {
         </van-radio-group>
       </div>
     </van-dialog>
+    </template>
   </div>
 </template>
 <style scoped lang="scss">

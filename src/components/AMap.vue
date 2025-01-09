@@ -92,6 +92,7 @@ const initMap = async ({ longitude, latitude }) => {
   AMapLoader.load({
     key: "0f20018974e4ab2189ad2d9f8b0a5702",
     version: "2.0",
+    plugins: ["AMap.Driving"]
   })
     .then((Map) => {
       AMap = Map;

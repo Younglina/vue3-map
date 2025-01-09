@@ -622,7 +622,7 @@ const handleOrder = () => {
   }, []);
   const orderData = {
     businessType: currentCarType.value === "firm" ? "11" : "5",
-    orderType: currentDateType.value,
+    orderType: 1 || currentDateType.value,
     endAddress: markerInfo.tname,
     endLatitude: markerInfo.tlat,
     endLngtitude: markerInfo.tlng,

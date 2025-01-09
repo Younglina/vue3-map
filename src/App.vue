@@ -1,3 +1,30 @@
+<script setup>
+import { Client } from "@stomp/stompjs";
+import { onMounted } from "vue";
+
+const webSocketURL = `ws://117.29.161.242:31232/api-tanji/foundation/ws-stomp?access_token=MTUxNzk4MTY4ODN8MXwyMDI0LTEyLTI2IDE0OjUyOjU5&tenant_id=1`;
+onMounted(() => {
+  const client = new Client({
+    brokerURL: webSocketURL,
+    connectHeaders: { "X-maas-TenantId": "1" },
+    onConnect: (e) => {
+      console.log(e);
+      client.subscribe(
+        "/queue/hailing/applet/push/travel.applet.hailing.message15179816883",
+        (message) =>
+          console.log(`Received: ${message.body}`, {
+            "Custom-Subscribe-Topic": "travel.applet.hailing.message",
+            id: "travel.applet.hailing.message15179816883",
+          })
+      );
+    },
+  });
+
+  client.activate();
+});
+</script>
+
+
 <template>
   <router-view></router-view>
 </template>
@@ -53,29 +80,3 @@ body {
   }
 }
 </style>
-
-<script setup>
-import { Client } from "@stomp/stompjs";
-import { onMounted } from "vue";
-
-const webSocketURL = `ws://117.29.161.242:31232/api-tanji/foundation/ws-stomp?access_token=MTUxNzk4MTY4ODN8MXwyMDI0LTEyLTI2IDE0OjUyOjU5&tenant_id=1`;
-onMounted(() => {
-  const client = new Client({
-    brokerURL: webSocketURL,
-    connectHeaders: { "X-maas-TenantId": "1" },
-    onConnect: (e) => {
-      console.log(e);
-      client.subscribe(
-        "/queue/hailing/applet/push/travel.applet.hailing.message15179816883",
-        (message) =>
-          console.log(`Received: ${message.body}`, {
-            "Custom-Subscribe-Topic": "travel.applet.hailing.message",
-            id: "travel.applet.hailing.message15179816883",
-          })
-      );
-    },
-  });
-
-  client.activate();
-});
-</script>
