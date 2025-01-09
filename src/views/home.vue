@@ -67,6 +67,7 @@ function getNearByCar() {
           image: gwcIcon,
           imageSize: new AMapObj.Size(25, 34),
         }),
+        angle: item.direction,
         offset: new AMapObj.Pixel(-12, -34),
       })
     });
