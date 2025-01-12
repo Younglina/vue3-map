@@ -28,15 +28,18 @@ async function initMap(order) {
     zoom: 17,
     center: [order.startLngtitude, order.startLatitude],
   });
-  setStartAndEnd(order);
+  // 司机出发 司机到达都不用, 会有地方加载
+  if (["2", "3"].includes(order.orderState)) {
+    setStartAndEnd(order);
+  }
 }
 
-
 const route = useRoute();
-const setStartAndEnd = (res) => {
+const setStartAndEnd = async (res) => {
+  map.clearMap();
   // 创建起点和终点标记
   const startMarker = new AMap.Marker({
-    position: [res.startLatitude, res.startLngtitude],
+    position: [res.startLngtitude, res.startLatitude],
     icon: new AMap.Icon({
       size: new AMap.Size(34, 34),
       image: startIcon,
@@ -45,62 +48,74 @@ const setStartAndEnd = (res) => {
     offset: new AMap.Pixel(-12, -34),
   });
 
-const endMarker = new AMap.Marker({
-  position: [res.endLngtitude, res.endLatitude],
-  icon: new AMap.Icon({
-    size: new AMap.Size(34, 34),
-    image: endIcon,
-    imageSize: new AMap.Size(34, 34),
-  }),
-  offset: new AMap.Pixel(-12, -34),
-});
-// 创建文本标记
-const startText = new AMap.Text({
-  text: `<div style="display:flex;align-items:center;"><div style="font-size:0.86rem;width: 100px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;font-weight: 700">${res.startAddress}</div></div>`,
-  anchor: "bottom-center",
-  position: [res.startLngtitude, res.startLatitude],
-  style: {
-    padding: "5px 10px",
-    "background-color": "#fff",
-    "border-radius": "16px",
-    "border-width": 0,
-    "box-shadow": "0 2px 6px rgba(0,0,0,0.1)",
-    color: "#333",
-    "font-size": "12px",
-    "min-width": "116px",
-    "text-align": "center",
-  },
-  offset: new AMap.Pixel(0, -32),
-});
+  let endMarker = new AMap.Marker({
+    position: [res.endLngtitude, res.endLatitude],
+    icon: new AMap.Icon({
+      size: new AMap.Size(34, 34),
+      image: endIcon,
+      imageSize: new AMap.Size(34, 34),
+    }),
+    offset: new AMap.Pixel(-12, -34),
+  });
+  if (["2", "3"].includes(res.orderState)) {
+    try {
+      const position = await getDriverLocation(res);
+      console.log(position);
+      endMarker.setPosition([position.endLngtitude, position.endLatitude]);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  map.add(startMarker);
+  map.add(endMarker);
 
-const endText = new AMap.Text({
-  text: `<div style="display:flex;align-items:center;"><div style="font-size:0.86rem;width: 100px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;font-weight: 700">${res.endAddress}</div></div>`,
-  anchor: "bottom-center",
-  position: [res.endLngtitude, res.endLatitude],
-  style: {
-    padding: "5px 10px",
-    "background-color": "#fff",
-    "border-radius": "16px",
-    "border-width": 0,
-    "box-shadow": "0 2px 6px rgba(0,0,0,0.1)",
-    color: "#333",
-    "font-size": "12px",
-    "min-width": "80px",
-    "text-align": "center",
-  },
-  offset: new AMap.Pixel(0, -32),
-});
-map.add(startMarker);
-map.add(endMarker);
-map.add(startText);
-map.add(endText);
+  if (!["2", "3", "4"].includes(res.orderState)) {
+    // 创建文本标记
+    const startText = new AMap.Text({
+      text: `<div style="display:flex;align-items:center;"><div style="font-size:0.86rem;width: 100px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;font-weight: 700">${res.startAddress}</div></div>`,
+      anchor: "bottom-center",
+      position: [res.startLngtitude, res.startLatitude],
+      style: {
+        padding: "5px 10px",
+        "background-color": "#fff",
+        "border-radius": "16px",
+        "border-width": 0,
+        "box-shadow": "0 2px 6px rgba(0,0,0,0.1)",
+        color: "#333",
+        "font-size": "12px",
+        "min-width": "116px",
+        "text-align": "center",
+      },
+      offset: new AMap.Pixel(0, -32),
+    });
 
-map.setFitView(
-  [startMarker, endMarker],
-  true,
-  [75, 75, 75, 80],
-  17
-);
+    const endText = new AMap.Text({
+      text: `<div style="display:flex;align-items:center;"><div style="font-size:0.86rem;width: 100px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;font-weight: 700">${res.endAddress}</div></div>`,
+      anchor: "bottom-center",
+      position: [res.endLngtitude, res.endLatitude],
+      style: {
+        padding: "5px 10px",
+        "background-color": "#fff",
+        "border-radius": "16px",
+        "border-width": 0,
+        "box-shadow": "0 2px 6px rgba(0,0,0,0.1)",
+        color: "#333",
+        "font-size": "12px",
+        "min-width": "80px",
+        "text-align": "center",
+      },
+      offset: new AMap.Pixel(0, -32),
+    });
+    map.add(startText);
+    map.add(endText);
+  }
+
+  // 行程中不用这里更新
+  if(!["4"].includes(res.orderState)){
+    map.setFitView([startMarker, endMarker], true, [75, 75, 75, 80], 17);
+  } else{
+    map.setFitView([startMarker], true, [75, 75, 75, 80], 19);
+  }
 };
 
 const businessData = {
@@ -187,7 +202,7 @@ function getOrderDetail(logId, orderNo) {
       //   },
       // };
       console.log(res);
-      const tempOrder = {...res.order};
+      const tempOrder = { ...res.order };
       [res.order.startLatitude, res.order.startLngtitude] =
         towgs84.transformWGS2GCJ(
           res.order.startLatitude,
@@ -199,41 +214,25 @@ function getOrderDetail(logId, orderNo) {
       if (!AMap && mapContainer.value) {
         await initMap(tempOrder);
       }
-      if (
-        orderDetail.orderNo &&
-        !["1"].includes(orderDetail.orderState)
-      ) {
+      if (orderDetail.orderNo && !["1"].includes(orderDetail.orderState)) {
         clearInterval(interval);
         interval = null;
       }
-      if(orderDetail.orderState === "4"){
-        map.clearMap()
+      if (orderDetail.orderState === "2") {
+        setStartAndEnd(orderDetail.order);
+        // getDriverLocation(orderDetail.order);
+      }
+      if (["4", "5", "6"].includes(orderDetail.orderState)) {
+        map.clearMap();
+
         getPlanInfo(orderDetail.order);
       }
 
-      if(orderDetail.orderState === "5" || orderDetail.orderState === "6"){
-        getPayParam(orderDetail.order)
-      }
+      // if(orderDetail.orderState === "5" || orderDetail.orderState === "6"){
+      //   getPayParam(orderDetail.order)
+      // }
     });
   }, 3000);
-}
-
-function getPayParam(order) {
-  request({
-    url: "/app/pay/order/payParam",
-    method: "POST",
-    headers: {
-      Authorization: route.query.token,
-    },
-    data: {
-      openId: 'wxc6f5cb56394f1ae0',
-      orderNo: order.orderNo,
-      payType: 1,
-      businessType: order.businessType,
-    },
-  }).then((res) => {
-    console.log(res);
-  });
 }
 
 const router = useRouter();
@@ -300,6 +299,20 @@ function handleReOrder() {
   // }
 }
 
+// 获取司机位置
+function getDriverLocation(order) {
+  return request({
+    url: "/app/common/driver/position/get",
+    method: "POST",
+    headers: {
+      Authorization: route.query.token,
+    },
+    data: {
+      driverId: order.driverId,
+    },
+  });
+}
+
 function getPlanInfo(orderDetail) {
   request({
     url: "/app/hailing/order/path/planning/info",
@@ -308,73 +321,85 @@ function getPlanInfo(orderDetail) {
       Authorization: route.query.token,
     },
     data: {
-      phone:orderDetail.passengerPhone,
-      orderNo:orderDetail.orderNo,
+      phone: orderDetail.passengerPhone,
+      orderNo: orderDetail.orderNo,
     },
   }).then((res) => {
-    const {
-      path, ...rest
-    } = res
-    const pathArray =  path.split(';').map(function(item) {
-        var coords = item.split(',');
+    const { path, ...rest } = res;
+    const pathArray = path
+      .split(";")
+      .map(function (item) {
+        var coords = item.split(",");
         return [parseFloat(coords[1]), parseFloat(coords[0])];
-    }).filter(function(item) { return item[0] && item[1]; });
-    updatePosition(pathArray, {...rest, ...orderDetail});
+      })
+      .filter(function (item) {
+        return item[0] && item[1];
+      });
+    updatePosition(pathArray, { ...rest, ...orderDetail });
   });
 }
 
 const polyline = ref(null);
 let driving = null;
 function updatePosition(pathArray, info) {
-  // if (!polyline.value) {
-  //     polyline.value = new AMap.Polyline({
-  //         path: pathArray,
-  //         strokeColor: "#FF33FF",
-  //         strokeOpacity: 1,
-  //         strokeWeight: 6,
-  //         strokeStyle: "solid",
-  //         geodesic: true
-  //     });
-  //     polyline.value.setMap(map);
-  // } else {
-  //     polyline.value.setPath(pathArray);
-  // }
-
-  // 路径规划
-  driving = new AMap.Driving({
-    map: map,
-    panel: false,
+  setStartAndEnd({
+    startLngtitude: info.longitude,
+    startLatitude: info.latitude,
+    endLngtitude: pathArray[pathArray.length - 1][0],
+    endLatitude: pathArray[pathArray.length - 1][1],
+    orderState: info.orderState,
   });
-  // 规划路线
-  driving.search(
-    [info.longitude, info.latitude],
-    [info.endLngtitude, info.endLatitude],
-    (status, result) => {
-      if (status === "complete") {
-        // 添加路程信息标记
-        const centerText = new AMap.Text({
-          text: `<div style="font-size:12px">距离目的地估计${(info.arriveMileage/1000).toFixed(1)}公里 ${formatDuration(info.arriveTime)}`,
-          anchor: "center",
-          position: [info.longitude, info.latitude],
-          style: {
-            padding: "2px 4px",
-            "background-color": "#666f83",
-            opacity: "80%",
-            "border-radius": "4px",
-            "border-width": 0,
-            color: "#ffffff",
-            "min-width": "128px",
-          },
-        });
-        map.add(centerText);
-        // setTimeout(() => {
-        //   getPlanInfo(info);
-        // }, 3000);
-      }
-    }
-  );
+  if (!polyline.value) {
+    polyline.value = new AMap.Polyline({
+      map: map,
+      path: pathArray,
+      strokeColor: "#28aa91", //线颜色
+      strokeOpacity: 1, //线透明度
+      strokeWeight: 5, //线宽
+      strokeStyle: "solid", //线样式
+      showDir: true, //是否显示箭头
+    });
+    polyline.value.setMap(map);
+  } else {
+    polyline.value.setPath(pathArray);
+  }
+  // 路径规划
+  // driving = new AMap.Driving({
+  //   map: map,
+  //   panel: false,
+  // });
+  // // 规划路线
+  // driving.search(
+  //   [info.longitude, info.latitude],
+  //   [info.endLngtitude, info.endLatitude],
+  //   (status, result) => {
+  //     if (status === "complete") {
+  // 添加路程信息标记
+  const centerText = new AMap.Text({
+    text: `<div style="font-size:12px">距离目的地估计${(
+      info.arriveMileage / 1000
+    ).toFixed(1)}公里 ${formatDuration(info.arriveTime)}`,
+    anchor: "center",
+    position: [info.longitude, info.latitude],
+    style: {
+      padding: "2px 4px",
+      "background-color": "#666f83",
+      opacity: "80%",
+      "border-radius": "4px",
+      "border-width": 0,
+      color: "#ffffff",
+      "min-width": "128px",
+    },
+  });
+  map.add(centerText);
+  // setTimeout(() => {
+  //   getPlanInfo(info);
+  // }, 3000);
+  // }
+  // }
+  // );
   // 更新地图中心点以跟随轨迹
-  map.setCenter([info.longitude, info.latitude]);
+  // map.setCenter([info.longitude, info.latitude]);
 }
 const formatDuration = (seconds) => {
   if (seconds < 60) {
@@ -541,7 +566,6 @@ onMounted(async () => {
   //   url: "http://localhost:5173/#/orderDetail?logId=1871799246868889602&token=MTUxNzk4MTY4ODN8emgwMDAwMnwyMDI0LTEyLTI1IDE3OjI1OjA4",
   // };
   getCancelReason();
-  
 });
 
 // ("1", "微信"),
@@ -552,276 +576,356 @@ onMounted(async () => {
 // ("24","全民付-微信"),
 // ("25","全民付-支付宝"),
 // ("26","全民付-云闪付"),
+const isShowPriceDetail = ref(false);
+const showPayTypeDialog = ref(false);
+const choosePayType = ref("1");
+const payTypeList = [
+  { name: "微信", value: "1" },
+  { name: "支付宝", value: "2" },
+  { name: "银联云闪付", value: "11" },
+  // { name: "全民付-微信", value: "24" },
+  // { name: "全民付-支付宝", value: "25" },
+  // { name: "全民付-云闪付", value: "26" },
+];
 
-function handlePay() {
+function getPayParam(order) {
   request({
-    url: "/app/hailing/order/pay",
+    url: "/app/pay/order/payParam",
     method: "POST",
     headers: {
       Authorization: route.query.token,
     },
     data: {
-      logId: orderDetail.orderNo,
+      openId: "wxc6f5cb56394f1ae0",
+      orderNo: order.orderNo,
       payType: 1,
+      payAction: 4,
+      businessType: order.businessType,
+      payExp: order.payExp,
+      subject: `${order.startAddress} - ${order.endAddress}出行费用`,
     },
   }).then((res) => {
     console.log(res);
   });
 }
+
+function cancelPay(type) {
+  if (type === "cancel") return (showPayTypeDialog.value = false);
+  getPayParam(orderDetail.order);
+  // request({
+  //   url: "/app/hailing/order/pay",
+  //   method: "POST",
+  //   headers: {
+  //     Authorization: route.query.token,
+  //   },
+  //   data: {
+  //     logId: orderDetail.orderNo,
+  //     payType: 1,
+  //   },
+  // }).then((res) => {
+  //   console.log(res);
+  // });
+}
 </script>
 <template>
   <div class="order-detail-wrap">
-    <div class="map-container" style="min-height: 35vh" id="order-wrap" ref="mapContainer"></div>
+    <div
+      class="map-container"
+      style="min-height: 35vh"
+      id="order-wrap"
+      ref="mapContainer"
+    ></div>
     <template v-if="orderDetail.orderNo">
-    <div class="state-wrap">
-      <div class="state-info-wrap">
-        <div class="state-info">
-          <div class="title">{{ showStateInfo.text }}</div>
-          <div class="info">{{ showStateInfo.subtext }}</div>
+      <div class="state-wrap">
+        <div class="state-info-wrap">
+          <div class="state-info">
+            <div class="title">{{ showStateInfo.text }}</div>
+            <div class="info">{{ showStateInfo.subtext }}</div>
+          </div>
+          <img src="@/assets/haixia.png" alt="" />
         </div>
-        <img src="@/assets/haixia.png" alt="" />
-      </div>
-      <div
-        v-if="['5', '6'].includes(orderDetail.orderState)"
-        class="c-card price-wrap"
-      >
-        <div>价格明细</div>
-        <div class="item">
-          <span>订单总额</span>
-          <div>
-            <span class="price">{{
-              orderDetail.order.orderAmount || "20.00"
-            }}</span
-            >元
+        <div
+          v-if="['5', '6'].includes(orderDetail.orderState)"
+          class="c-card price-wrap"
+        >
+          <div>价格明细</div>
+          <div class="item">
+            <span>订单总额</span>
+            <div>
+              <span class="price">{{ orderDetail.order.orderAmount }}</span
+              >元
+            </div>
+          </div>
+          <div v-show="isShowPriceDetail">
+            <div
+              v-for="item in orderDetail.order.orderAmountList"
+              :key="item.priceType"
+              class="item"
+            >
+              <span>{{ item.priceName }}</span>
+              <div>
+                <span class="price">{{ item.amount }}</span
+                >元
+              </div>
+            </div>
+          </div>
+          <div
+            @click="isShowPriceDetail = !isShowPriceDetail"
+            :class="['showprice-btn', { 'isshow-price': isShowPriceDetail }]"
+          >
+            {{ isShowPriceDetail ? "收起" : "展开" }}详情
           </div>
         </div>
+        <div
+          class="car-info-wrap"
+          v-if="
+            ['0', '2', '3', '4', '5', '6', '100'].includes(
+              orderDetail.orderState
+            )
+          "
+        >
+          <div>
+            <div class="car-type-info">
+              <span class="car-type">{{
+                businessData[orderDetail.order.vehicleModelLevel]
+              }}</span>
+              <span class="car-type-name">曹操出行</span>
+            </div>
+            <div class="car-num">{{ orderDetail.order.plateNum }}</div>
+            <div>
+              <span class="car-name">凯迪拉克·白</span>
+              <span class="car-dirver">{{ orderDetail.order.driverName }}</span>
+            </div>
+          </div>
+          <div class="car-phone" @click="callDriver">
+            <img src="@/assets/phoneCall.svg" alt="" />
+            <span>打电话</span>
+          </div>
+        </div>
+        <div class="paidan-wrap" v-if="orderDetail.orderState == '1'">
+          <div>
+            <div>正在同时呼叫{{ orderDetail.totalChooseCarTypeNum }}个车型</div>
+            <div>经济型1</div>
+          </div>
+          <div class="div-btn" @click="cancelOrder('show')">取消订单</div>
+        </div>
       </div>
       <div
-        class="car-info-wrap"
         v-if="
           ['0', '2', '3', '4', '5', '6', '100'].includes(orderDetail.orderState)
         "
+        class="order-btns"
       >
-        <div>
-          <div class="car-type-info">
-            <span class="car-type">{{
-              businessData[orderDetail.order.vehicleModelLevel]
-            }}</span>
-            <span class="car-type-name">曹操出行</span>
-          </div>
-          <div class="car-num">赣BU13EI</div>
-          <div>
-            <span class="car-name">凯迪拉克·白</span>
-            <span class="car-dirver">周师傅</span>
-          </div>
+        <div class="action-btn" @click="cancelOrder('show')">
+          <img src="@/assets/close.svg" alt="" />
+          <span>取消订单</span>
         </div>
-        <div class="car-phone" @click="callDriver">
-          <img src="@/assets/phoneCall.svg" alt="" />
-          <span>打电话</span>
+        <div class="action-btn" @click="callPolice">
+          <img src="@/assets/110.png" alt="" />
+          <span>110报警</span>
         </div>
-      </div>
-      <div class="paidan-wrap" v-if="orderDetail.orderState == '1'">
-        <div>
-          <div>正在同时呼叫{{ orderDetail.totalChooseCarTypeNum }}个车型</div>
-          <div>经济型1</div>
+        <div class="action-btn" @click="shareTrip">
+          <img src="@/assets/share.png" alt="" />
+          <span>分享行程</span>
         </div>
-        <div class="div-btn" @click="cancelOrder('show')">取消订单</div>
-      </div>
-    </div>
-    <div
-      v-if="
-        ['0', '2', '3', '4', '5', '6', '100'].includes(orderDetail.orderState)
-      "
-      class="order-btns"
-    >
-      <div class="action-btn" @click="cancelOrder('show')">
-        <img src="@/assets/close.svg" alt="" />
-        <span>取消订单</span>
-      </div>
-      <div class="action-btn" @click="callPolice">
-        <img src="@/assets/110.png" alt="" />
-        <span>110报警</span>
-      </div>
-      <div class="action-btn" @click="shareTrip">
-        <img src="@/assets/share.png" alt="" />
-        <span>分享行程</span>
-      </div>
-      <div class="action-btn" @click="contactService">
-        <img src="@/assets/kefu.png" alt="" />
-        <span>客服</span>
-      </div>
-    </div>
-
-    <div class="order-info">
-      <!-- 出行信息 -->
-      <div class="road-card">
-        <div class="card-title">出行信息</div>
-        <div class="info-item">
-          <img src="@/assets/company.png" class="icon" />
-          <span>
-            {{
-              orderDetail.order.carUseType === "firm" ? "企业用车" : "个人用车"
-            }}
-            {{
-              orderDetail.order.orderType === "4"
-                ? "日租"
-                : orderDetail.order.orderType === "5"
-                ? "半日租"
-                : ""
-            }}
-          </span>
-        </div>
-        <div class="info-item from-area">
-          <span>{{ orderDetail.order.startAddress }}</span>
-        </div>
-        <div class="info-item to-area">
-          <span>{{ orderDetail.order.endAddress }}</span>
-        </div>
-        <div class="info-item time">
-          <img src="@/assets/clock.png" class="icon" />
-          <span v-if="orderDetail.order.useCarTime"
-            >{{
-              moment(orderDetail.order.useCarTime).format("MM月DD日 HH:mm")
-            }}
-            {{ orderDetail.order.orderType === "2" ? "预约用车" : "" }}</span
-          >
+        <div class="action-btn" @click="contactService">
+          <img src="@/assets/kefu.png" alt="" />
+          <span>客服</span>
         </div>
       </div>
 
-      <div class="info-card">
-        <!-- 乘车人信息 -->
-        <div class="info-card_item">
-          <div class="card-title">乘车人信息</div>
-          <div class="user-info">
-            <span class="name">{{ orderDetail.order.passengerName }}</span>
-            <span class="tag">乘车联系人</span>
-          </div>
-          <span class="phone"
-            >手机号
-            {{
-              orderDetail.order.passengerPhone.slice(0, 3) +
-              "****" +
-              orderDetail.order.passengerPhone.slice(7)
-            }}
-          </span>
-        </div>
-
-        <!-- 同行人信息 -->
-        <div
-          class="info-card_item"
-          v-if="
-            orderDetail.order.companionInfos &&
-            orderDetail.order.companionInfos.length
-          "
-        >
-          <div class="card-title">同行人信息</div>
-          <div
-            v-for="item in orderDetail.order.companionInfos"
-            :key="item.companionPhone"
-          >
-            <div class="user-info">
-              <span class="name">{{ item.companionName }}</span>
-            </div>
-            <span class="phone"
-              >手机号
+      <div class="order-info">
+        <!-- 出行信息 -->
+        <div class="road-card">
+          <div class="card-title">出行信息</div>
+          <div class="info-item">
+            <img src="@/assets/company.png" class="icon" />
+            <span>
               {{
-                item.companionPhone.slice(0, 3) +
-                "****" +
-                item.companionPhone.slice(7)
-              }}</span
+                orderDetail.order.carUseType === "firm"
+                  ? "企业用车"
+                  : "个人用车"
+              }}
+              {{
+                orderDetail.order.orderType === "4"
+                  ? "日租"
+                  : orderDetail.order.orderType === "5"
+                  ? "半日租"
+                  : ""
+              }}
+            </span>
+          </div>
+          <div class="info-item from-area">
+            <span>{{ orderDetail.order.startAddress }}</span>
+          </div>
+          <div class="info-item to-area">
+            <span>{{ orderDetail.order.endAddress }}</span>
+          </div>
+          <div class="info-item time">
+            <img src="@/assets/clock.png" class="icon" />
+            <span v-if="orderDetail.order.useCarTime"
+              >{{
+                moment(orderDetail.order.useCarTime).format("MM月DD日 HH:mm")
+              }}
+              {{ orderDetail.order.orderType === "2" ? "预约用车" : "" }}</span
             >
           </div>
         </div>
 
-        <!-- 用车信息 -->
-        <div class="info-card_item" v-if="orderDetail.order.useCarReason">
-          <div class="card-title">用车信息</div>
+        <div class="info-card">
+          <!-- 乘车人信息 -->
+          <div class="info-card_item">
+            <div class="card-title">乘车人信息</div>
+            <div class="user-info">
+              <span class="name">{{ orderDetail.order.passengerName }}</span>
+              <span class="tag">乘车联系人</span>
+            </div>
+            <span class="phone"
+              >手机号
+              {{
+                orderDetail.order.passengerPhone.slice(0, 3) +
+                "****" +
+                orderDetail.order.passengerPhone.slice(7)
+              }}
+            </span>
+          </div>
+
+          <!-- 同行人信息 -->
+          <div
+            class="info-card_item"
+            v-if="
+              orderDetail.order.companionInfos &&
+              orderDetail.order.companionInfos.length
+            "
+          >
+            <div class="card-title">同行人信息</div>
+            <div
+              v-for="item in orderDetail.order.companionInfos"
+              :key="item.companionPhone"
+            >
+              <div class="user-info">
+                <span class="name">{{ item.companionName }}</span>
+              </div>
+              <span class="phone"
+                >手机号
+                {{
+                  item.companionPhone.slice(0, 3) +
+                  "****" +
+                  item.companionPhone.slice(7)
+                }}</span
+              >
+            </div>
+          </div>
+
+          <!-- 用车信息 -->
+          <div class="info-card_item" v-if="orderDetail.order.useCarReason">
+            <div class="card-title">用车信息</div>
+            <div class="info-item">
+              <span class="label">用车事由</span>
+              <span class="value">{{ orderDetail.order.useCarReason }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 订单信息 -->
+        <div v-if="orderDetail.order.status != 1" class="c-card">
+          <div class="card-title">订单信息</div>
           <div class="info-item">
-            <span class="label">用车事由</span>
-            <span class="value">{{ orderDetail.order.useCarReason }}</span>
+            <span class="label">订单号</span>
+            <span class="value">{{ orderDetail.orderNo }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">下单时间</span>
+            <span class="value">{{ orderDetail.orderTime }}</span>
+          </div>
+        </div>
+
+        <!-- 取消规则 -->
+        <div class="rules-card">
+          <div class="rules-title">取消规则</div>
+          <div class="rule-item">
+            <span class="dot"></span>
+            <span>企业用车审批单未通过，可以随时取消</span>
+          </div>
+          <div class="rule-item">
+            <span class="dot"></span>
+            <span>司机接单前可以免费取消</span>
+          </div>
+          <div class="rule-item">
+            <span class="dot"></span>
+            <span>司机接单后取消订单，您可能需要支付一定的违约金</span>
+          </div>
+          <div class="rule-item">
+            <span class="dot"></span>
+            <span>行程开始后不可取消订单</span>
+          </div>
+        </div>
+
+        <!-- 用车规则 -->
+        <div class="rules-card">
+          <div class="rules-title">用车规则</div>
+          <div class="rule-item">
+            <span class="dot"></span>
+            <span
+              >同一司机联系人手机号，同时只能下一个立即用车行程和一个预约用车(包括预约用车/接送机/接送站)行程</span
+            >
           </div>
         </div>
       </div>
 
-      <!-- 订单信息 -->
-      <div v-if="orderDetail.order.status != 1" class="c-card">
-        <div class="card-title">订单信息</div>
-        <div class="info-item">
-          <span class="label">订单号</span>
-          <span class="value">{{ orderDetail.orderNo }}</span>
+      <div
+        class="bottom-wrap"
+        v-if="['101', '102'].includes(orderDetail.orderState)"
+      >
+        <div class="btn" @click="handleReOrder">重新寻车</div>
+      </div>
+      <div class="bottom-wrap" v-if="['5','6'].includes(orderDetail.orderState)">
+        <div>
+          总额<span class="price">{{ orderDetail.order.orderAmount }}</span
+          >元
         </div>
-        <div class="info-item">
-          <span class="label">下单时间</span>
-          <span class="value">{{ orderDetail.orderTime }}</span>
-        </div>
+        <div class="btn min-btn" @click="showPayTypeDialog = true">去支付</div>
       </div>
 
-      <!-- 取消规则 -->
-      <div class="rules-card">
-        <div class="rules-title">取消规则</div>
-        <div class="rule-item">
-          <span class="dot"></span>
-          <span>企业用车审批单未通过，可以随时取消</span>
+      <van-dialog
+        v-model:show="showCancleDialog"
+        title="请选择取消原因"
+        show-cancel-button
+        @confirm="cancelOrder('confirm')"
+        @cancel="cancelOrder('cancel')"
+      >
+        <div class="reason-wrap">
+          <van-radio-group v-model="chooseReason">
+            <van-radio
+              v-for="item in cancelReason"
+              :key="item"
+              :name="item"
+              class="cancel-reason"
+              >{{ item }}</van-radio
+            >
+          </van-radio-group>
         </div>
-        <div class="rule-item">
-          <span class="dot"></span>
-          <span>司机接单前可以免费取消</span>
-        </div>
-        <div class="rule-item">
-          <span class="dot"></span>
-          <span>司机接单后取消订单，您可能需要支付一定的违约金</span>
-        </div>
-        <div class="rule-item">
-          <span class="dot"></span>
-          <span>行程开始后不可取消订单</span>
-        </div>
-      </div>
+      </van-dialog>
 
-      <!-- 用车规则 -->
-      <div class="rules-card">
-        <div class="rules-title">用车规则</div>
-        <div class="rule-item">
-          <span class="dot"></span>
-          <span
-            >同一司机联系人手机号，同时只能下一个立即用车行程和一个预约用车(包括预约用车/接送机/接送站)行程</span
-          >
+      <van-dialog
+        v-model:show="showPayTypeDialog"
+        title="请选择支付方式"
+        show-cancel-button
+        @confirm="cancelPay('confirm')"
+        @cancel="cancelPay('cancel')"
+      >
+        <div class="reason-wrap">
+          <van-radio-group v-model="choosePayType">
+            <van-radio
+              v-for="item in payTypeList"
+              :key="item.value"
+              :name="item.value"
+              class="cancel-reason"
+              >{{ item.name }}</van-radio
+            >
+          </van-radio-group>
         </div>
-      </div>
-    </div>
-
-    <div
-      class="bottom-wrap"
-      v-if="['101', '102'].includes(orderDetail.orderState)"
-    >
-      <div class="btn" @click="handleReOrder">重新寻车</div>
-    </div>
-    <div class="bottom-wrap" v-if="['5'].includes(orderDetail.orderState)">
-      <div>
-        总额<span class="price">{{ orderDetail.totalPrice || "20" }}</span
-        >元
-      </div>
-      <div class="btn min-btn" @click="handlePay">去支付</div>
-    </div>
-
-    <van-dialog
-      v-model:show="showCancleDialog"
-      title="请选择取消原因"
-      show-cancel-button
-      @confirm="cancelOrder('confirm')"
-      @cancel="cancelOrder('cancel')"
-    >
-      <div class="reason-wrap">
-        <van-radio-group v-model="chooseReason">
-          <van-radio
-            v-for="item in cancelReason"
-            :key="item"
-            :name="item"
-            class="cancel-reason"
-            >{{ item }}</van-radio
-          >
-        </van-radio-group>
-      </div>
-    </van-dialog>
+      </van-dialog>
     </template>
   </div>
 </template>
@@ -1111,5 +1215,37 @@ function handlePay() {
 .reason-wrap {
   max-height: 50vh;
   overflow-y: auto;
+}
+
+.bottom-wrap {
+  padding-left: 16px;
+  bottom: 16px;
+  .price {
+    padding: 0 4px;
+  }
+}
+
+.showprice-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  padding-top: 10px;
+  &::after {
+    content: "";
+    margin-left: 10px;
+    width: 4px;
+    height: 4px;
+    border: 1px solid #000000;
+    border-top: none;
+    border-right: none;
+    transform: rotate(-45deg);
+  }
+}
+
+.isshow-price {
+  &::after {
+    transform: rotate(135deg);
+  }
 }
 </style>
