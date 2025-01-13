@@ -111,9 +111,9 @@ const setStartAndEnd = async (res) => {
   }
 
   // 行程中不用这里更新
-  if(!["4"].includes(res.orderState)){
+  if (!["4"].includes(res.orderState)) {
     map.setFitView([startMarker, endMarker], true, [75, 75, 75, 80], 17);
-  } else{
+  } else {
     map.setFitView([startMarker], true, [75, 75, 75, 80], 19);
   }
 };
@@ -601,7 +601,7 @@ function getPayParam(order) {
       payType: 1,
       payAction: 4,
       businessType: order.businessType,
-      payExp: order.payExp,
+      payAmount: order.orderAmount,
       subject: `${order.startAddress} - ${order.endAddress}出行费用`,
     },
   }).then((res) => {
@@ -879,7 +879,10 @@ function cancelPay(type) {
       >
         <div class="btn" @click="handleReOrder">重新寻车</div>
       </div>
-      <div class="bottom-wrap" v-if="['5','6'].includes(orderDetail.orderState)">
+      <div
+        class="bottom-wrap"
+        v-if="['5', '6'].includes(orderDetail.orderState)"
+      >
         <div>
           总额<span class="price">{{ orderDetail.order.orderAmount }}</span
           >元
