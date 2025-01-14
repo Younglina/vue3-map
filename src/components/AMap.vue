@@ -73,7 +73,7 @@ const initMap = async ({ longitude, latitude }) => {
   //   .then((response) => response.json())
   //   .then((data) => {
   // const data = {
-  //   appId: "wxc6f5cb56394f1ae0",
+  //   appId: "wx78eaa63b82d9edf1",
   //   nonceStr: "nCCb7U7xB6pD6jI8",
   //   timestamp: 1734667874,
   //   signature: "a314dd844f175c1af63464c2d45d5d5631c17f2f",
@@ -92,7 +92,7 @@ const initMap = async ({ longitude, latitude }) => {
   AMapLoader.load({
     key: "0f20018974e4ab2189ad2d9f8b0a5702",
     version: "2.0",
-    plugins: ["AMap.Driving"]
+    plugins: ["AMap.Driving"],
   })
     .then((Map) => {
       AMap = Map;
@@ -105,7 +105,7 @@ const initMap = async ({ longitude, latitude }) => {
         currentAddress.value = { name: "正在定位." };
       });
       map.on("dragend", handleMapDragEnd);
-      emit("loaded", {AMap, map});
+      emit("loaded", { AMap, map });
       getPOIByLocation([longitude, latitude]);
     })
     .catch((e) => {

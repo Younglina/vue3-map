@@ -59,9 +59,14 @@ const setStartAndEnd = async (res) => {
   });
   if (["2", "3"].includes(res.orderState)) {
     try {
-      const position = await getDriverLocation(res);
-      console.log(position);
-      endMarker.setPosition([position.endLngtitude, position.endLatitude]);
+      const { data } = await getDriverLocation(res);
+      if (data) {
+        const newPosition = new AMap.LngLat(
+          data.driverPosition.lng,
+          data.driverPosition.lat
+        );
+        endMarker.setPosition(newPosition);
+      }
     } catch (e) {
       console.log(e);
     }
@@ -138,69 +143,6 @@ function getOrderDetail(logId, orderNo) {
         orderNo,
       },
     }).then(async (res) => {
-      // const res = {
-      //   orderNo: "2024122800010520000044",
-      //   passengerId: "1872173744031252481",
-      //   orderTime: "2024-12-28 07:52:28",
-      //   orderState: "4",
-      //   orderStateStr: "待派车",
-      //   orderSource: null,
-      //   orderAmount: null,
-      //   businessType: "5",
-      //   arrangedTips: null,
-      //   order: {
-      //     logId: "1872913492504035329",
-      //     passengerId: "1872173744031252481",
-      //     orderPersonPhone: "15179816883",
-      //     orderPersonDeptName: null,
-      //     orderPersonOrgName: null,
-      //     orderPersonName: "6883",
-      //     passengerPhone: "15166666666",
-      //     passengerName: "wzq",
-      //     orderTime: "2024-12-28 07:52:28",
-      //     orderState: "1",
-      //     useCarTime: "2024-12-28 15:52:24",
-      //     useCarReason: "",
-      //     orderType: "2",
-      //     onlinePay: null,
-      //     rentDuration: "12",
-      //     dispatchType: "2",
-      //     placeOrderType: "2",
-      //     startLngtitude: 120.211784,
-      //     startLatitude: 30.208879,
-      //     startAddress: "高新区(滨江)公安分局",
-      //     startAddressFull: "",
-      //     endLngtitude: 120.223401,
-      //     endLatitude: 30.220748,
-      //     endAddress: "印月尚庭(西北门)",
-      //     endAddressFull: "丹枫路86号印月尚庭",
-      //     approvalNo: "",
-      //     togetherOrder: "0",
-      //     orderNo: "2024122800010520000044",
-      //     remark: null,
-      //     businessType: "5",
-      //     chooseBusinessType: "5",
-      //     businessId: null,
-      //     cancelType: null,
-      //     cancelDesc: null,
-      //     cancelTime: null,
-      //     createUserId: "1872173747813265410",
-      //     orgId: "1",
-      //     orgName: null,
-      //     orderSource: "2",
-      //     dispatchSource: "5",
-      //     driverId: null,
-      //     vehicleId: null,
-      //     togetherList: null,
-      //     midwayPoint: null,
-      //     channelId: null,
-      //     vehicleModelLevel: null,
-      //     partnerOrderId: null,
-      //     partnerCarTypeId: null,
-      //     partnerEstimateId: null,
-      //     partnerEstimateAmount: null,
-      //   },
-      // };
       console.log(res);
       const tempOrder = { ...res.order };
       [res.order.startLatitude, res.order.startLngtitude] =
@@ -214,25 +156,22 @@ function getOrderDetail(logId, orderNo) {
       if (!AMap && mapContainer.value) {
         await initMap(tempOrder);
       }
-      if (orderDetail.orderNo && !["1"].includes(orderDetail.orderState)) {
+      if (
+        orderDetail.orderNo &&
+        !["1", "2", "3"].includes(orderDetail.orderState)
+      ) {
         clearInterval(interval);
         interval = null;
       }
-      if (orderDetail.orderState === "2") {
+      if (["2", "3"].includes(orderDetail.orderState)) {
         setStartAndEnd(orderDetail.order);
-        // getDriverLocation(orderDetail.order);
       }
       if (["4", "5", "6"].includes(orderDetail.orderState)) {
         map.clearMap();
-
         getPlanInfo(orderDetail.order);
       }
-
-      // if(orderDetail.orderState === "5" || orderDetail.orderState === "6"){
-      //   getPayParam(orderDetail.order)
-      // }
     });
-  }, 3000);
+  }, 2000);
 }
 
 const router = useRouter();
@@ -314,14 +253,21 @@ function getDriverLocation(order) {
 }
 
 function getPlanInfo(orderDetail) {
+  let url = "/app/hailing/order/path/planning/info";
+  if (orderDetail.orderState === "6") {
+    url = "/app/hailing/order/real/trip";
+  }
   request({
-    url: "/app/hailing/order/path/planning/info",
-    method: "POST",
+    url: url,
+    method: orderDetail.orderState === "6" ? "GET" : "POST",
     headers: {
       Authorization: route.query.token,
     },
     data: {
       phone: orderDetail.passengerPhone,
+      orderNo: orderDetail.orderNo,
+    },
+    params: {
       orderNo: orderDetail.orderNo,
     },
   }).then((res) => {
@@ -342,6 +288,7 @@ function getPlanInfo(orderDetail) {
 const polyline = ref(null);
 let driving = null;
 function updatePosition(pathArray, info) {
+  console.log({ pathArray });
   setStartAndEnd({
     startLngtitude: info.longitude,
     startLatitude: info.latitude,
@@ -362,6 +309,7 @@ function updatePosition(pathArray, info) {
     polyline.value.setMap(map);
   } else {
     polyline.value.setPath(pathArray);
+    polyline.value.setMap(map);
   }
   // 路径规划
   // driving = new AMap.Driving({
@@ -392,6 +340,11 @@ function updatePosition(pathArray, info) {
     },
   });
   map.add(centerText);
+  if (info.orderState !== "6") {
+    setTimeout(() => {
+      getPlanInfo(info);
+    }, 3000);
+  }
   // setTimeout(() => {
   //   getPlanInfo(info);
   // }, 3000);
@@ -559,7 +512,7 @@ onMounted(async () => {
   getOrderDetail(route.query.logId, route.query.orderNo);
   // axios("/api/signature?url=" + encodeURIComponent(window.location.href));
   // const appdsata = {
-  //   appId: "wxc6f5cb56394f1ae0",
+  //   appId: "wx78eaa63b82d9edf1",
   //   nonceStr: "YWW5ZIXLWlvYno4I",
   //   timestamp: 1735182029,
   //   signature: "67920b72be7d7496544c755bebacb2c4c037fcdc",
@@ -596,7 +549,7 @@ function getPayParam(order) {
       Authorization: route.query.token,
     },
     data: {
-      openId: "wxc6f5cb56394f1ae0",
+      openId: "wx78eaa63b82d9edf1",
       orderNo: order.orderNo,
       payType: 1,
       payAction: 4,
