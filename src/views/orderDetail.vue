@@ -549,7 +549,7 @@ function getPayParam(order) {
       Authorization: route.query.token,
     },
     data: {
-      openId: "wx78eaa63b82d9edf1",
+      openId: "oXPic7VMwvkXXibqg5ltLkp_sDfE",
       orderNo: order.orderNo,
       payType: 1,
       payAction: 4,
