@@ -116,51 +116,50 @@ const handleChoosePrice = (item) => {
 };
 
 const getBusinessList = () => {
-  // request({
-  //   url: "/app/hailing/vehicle/model/level",
-  //   method: "POST",
-  //   headers: {
-  //     Authorization: route.query.token,
-  //   },
-  // data: {
-  //   businessType: "5",
-  // },
-  // }).then((businessData) => {
-  const businessData = [
-    {
-      vehicleModelLevel: "fastCar",
-      vehicleModelLevelName: "快车",
-      carTypes: [{ carTypeId: "HS001", carTypeName: "滴滴快车" }],
+  request({
+    url: "/app/hailing/vehicle/model/level",
+    method: "POST",
+    headers: {
+      Authorization: route.query.token,
     },
-    {
-      vehicleModelLevel: "specialCar",
-      vehicleModelLevelName: "专车",
-      carTypes: [
-        { carTypeId: "HS002", carTypeName: "曹操专车" },
-        { carTypeId: "ZSX001", carTypeName: "掌上行专车" },
-      ],
+    data: {
+      businessType: "5",
     },
-    {
-      vehicleModelLevel: "taxi",
-      vehicleModelLevelName: "出租车",
-      carTypes: [{ carTypeId: "WXDW001", carTypeName: "优享出租" }],
-    },
-  ];
-  if (businessData && businessData.length > 0) {
-    businessData.forEach((item) => {
-      item.choosedNum = 0;
-      item.choosed = [];
-      item.priceStr = "-";
-      item.minPrice = Infinity;
-      item.maxPrice = -Infinity;
-      item.carTypes.forEach((i) => {
-        i.choosed = "0";
+  }).then((businessData) => {
+    // const businessData = [
+    //   {
+    //     vehicleModelLevel: "fastCar",
+    //     vehicleModelLevelName: "快车",
+    //     carTypes: [{ carTypeId: "HS001", carTypeName: "滴滴快车" }],
+    //   },
+    //   {
+    //     vehicleModelLevel: "specialCar",
+    //     vehicleModelLevelName: "专车",
+    //     carTypes: [
+    //       { carTypeId: "HS002", carTypeName: "曹操专车" },
+    //       { carTypeId: "ZSX001", carTypeName: "掌上行专车" },
+    //     ],
+    //   },
+    //   {
+    //     vehicleModelLevel: "taxi",
+    //     vehicleModelLevelName: "出租车",
+    //     carTypes: [{ carTypeId: "WXDW001", carTypeName: "优享出租" }],
+    //   },
+    // ];
+    if (businessData && businessData.length > 0) {
+      businessData.forEach((item) => {
+        item.choosedNum = 0;
+        item.choosed = [];
+        item.priceStr = "-";
+        item.minPrice = Infinity;
+        item.maxPrice = -Infinity;
+        item.carTypes.forEach((i) => {
+          i.choosed = "0";
+        });
       });
-    });
-    carList.value = businessData;
-    // });
-  }
-  // });
+      carList.value = businessData;
+    }
+  });
 };
 
 // 点击外面的车请求运力类型以后缓存
@@ -177,98 +176,98 @@ const handleChooseCar = (item) => {
     showCarPicker.value = true;
     return;
   }
-  // request({
-  //   url: "/app/hailing/trip/estimate/v2/get",
-  //   method: "POST",
-  //   headers: {
-  //     Authorization: route.query.token,
-  //   },
-  //   data: {
-  //     businessType: currentCarType.value === "person" ? "5" : "11",
-  //     carTypeIds: item.carTypes.map((i) => i.carTypeId),
-  //     endLat: markerInfo.tlat,
-  //     endLng: markerInfo.tlng,
-  //     endAddress: markerInfo.tname,
-  //     orderType: currentDateType.value,
-  //     startLat: markerInfo.flat,
-  //     startLng: markerInfo.flng,
-  //     startAddress: markerInfo.fname,
-  //     useCarTime: moment().format("YYYY-MM-DD HH:mm:ss"),
-  //   },
-  // })
-  //   .then((res) => {
-  const res = [
-    {
-      vehicleModelLevel: item.vehicleModelLevel,
-      vehicleModelLevelName: item.vehicleModelLevelName,
-      estimateMinPrice: 55.04,
-      estimateMaxPrice: 55.04,
-      discountMaxPrice: 0,
-      estimateCarTypes: [
-        {
-          carTypeId: "ZSX001",
-          carTypeName: "掌上行专车",
-          taxiMetered: false,
-          estimateId: null,
-          estimateDistance: 3.011,
-          estimateTime: 10,
-          estimatePrice: 55.04,
-          discountPrice: 0.0,
-          fixedPriceType: null,
-          fixedPrice: 0.0,
-          travelPrice: 55.04,
-          minPrice: 1.0,
-          initPrice: 1.0,
-          distancePrice: 2.02,
-          timePrice: 50.0,
-          nightPrice: 0.0,
-          longDistance: 1.0,
-          longDistancePrice: 2.02,
-          dynamicPrice: 0.0,
-          servicePrice: 0.0,
-        },
-        {
-          carTypeId: "ZSX002",
-          carTypeName: "专车",
-          taxiMetered: false,
-          estimateId: null,
-          estimateDistance: 3.011,
-          estimateTime: 10,
-          estimatePrice: 50.04,
-          discountPrice: 0.0,
-          fixedPriceType: null,
-          fixedPrice: 0.0,
-          travelPrice: 50.04,
-          minPrice: 1.0,
-          initPrice: 1.0,
-          distancePrice: 2.02,
-          timePrice: 50.0,
-          nightPrice: 0.0,
-          longDistance: 1.0,
-          longDistancePrice: 2.02,
-          dynamicPrice: 0.0,
-          servicePrice: 0.0,
-        },
-      ],
+  request({
+    url: "/app/hailing/trip/estimate/v2/get",
+    method: "POST",
+    headers: {
+      Authorization: route.query.token,
     },
-  ];
-  if (res && res.length) {
-    res[0].choosedNum = 0;
-    res[0].allChoosed = false;
-    res[0].estimateCarTypes.forEach((ec) => {
-      ec.choosed = "0";
-      ec.vehicleModelLevel = ec.vehicleModelLevel;
+    data: {
+      businessType: currentCarType.value === "person" ? "5" : "11",
+      carTypeIds: item.carTypes.map((i) => i.carTypeId),
+      endLat: markerInfo.tlat,
+      endLng: markerInfo.tlng,
+      endAddress: markerInfo.tname,
+      orderType: currentDateType.value,
+      startLat: markerInfo.flat,
+      startLng: markerInfo.flng,
+      startAddress: markerInfo.fname,
+      useCarTime: moment().format("YYYY-MM-DD HH:mm:ss"),
+    },
+  })
+    .then((res) => {
+      // const res = [
+      //   {
+      //     vehicleModelLevel: item.vehicleModelLevel,
+      //     vehicleModelLevelName: item.vehicleModelLevelName,
+      //     estimateMinPrice: 55.04,
+      //     estimateMaxPrice: 55.04,
+      //     discountMaxPrice: 0,
+      //     estimateCarTypes: [
+      //       {
+      //         carTypeId: "ZSX001",
+      //         carTypeName: "掌上行专车",
+      //         taxiMetered: false,
+      //         estimateId: null,
+      //         estimateDistance: 3.011,
+      //         estimateTime: 10,
+      //         estimatePrice: 55.04,
+      //         discountPrice: 0.0,
+      //         fixedPriceType: null,
+      //         fixedPrice: 0.0,
+      //         travelPrice: 55.04,
+      //         minPrice: 1.0,
+      //         initPrice: 1.0,
+      //         distancePrice: 2.02,
+      //         timePrice: 50.0,
+      //         nightPrice: 0.0,
+      //         longDistance: 1.0,
+      //         longDistancePrice: 2.02,
+      //         dynamicPrice: 0.0,
+      //         servicePrice: 0.0,
+      //       },
+      //       {
+      //         carTypeId: "ZSX002",
+      //         carTypeName: "专车",
+      //         taxiMetered: false,
+      //         estimateId: null,
+      //         estimateDistance: 3.011,
+      //         estimateTime: 10,
+      //         estimatePrice: 50.04,
+      //         discountPrice: 0.0,
+      //         fixedPriceType: null,
+      //         fixedPrice: 0.0,
+      //         travelPrice: 50.04,
+      //         minPrice: 1.0,
+      //         initPrice: 1.0,
+      //         distancePrice: 2.02,
+      //         timePrice: 50.0,
+      //         nightPrice: 0.0,
+      //         longDistance: 1.0,
+      //         longDistancePrice: 2.02,
+      //         dynamicPrice: 0.0,
+      //         servicePrice: 0.0,
+      //       },
+      //     ],
+      //   },
+      // ];
+      if (res && res.length) {
+        res[0].choosedNum = 0;
+        res[0].allChoosed = false;
+        res[0].estimateCarTypes.forEach((ec) => {
+          ec.choosed = "0";
+          ec.vehicleModelLevel = ec.vehicleModelLevel;
+        });
+        tempCarTypeInfo.value = JSON.parse(JSON.stringify(res[0]));
+        cacheCarType[item.vehicleModelLevel] = res[0];
+        showCarPicker.value = true;
+      } else {
+        showToast("无可用车型");
+      }
+    })
+    .catch(() => {
+      showToast("无可用车型");
     });
-    tempCarTypeInfo.value = JSON.parse(JSON.stringify(res[0]));
-    cacheCarType[item.vehicleModelLevel] = res[0];
-    showCarPicker.value = true;
-  } else {
-    showToast("无可用车型");
-  }
-  // })
-  // .catch(() => {
-  //   showToast("无可用车型");
-  // });
 };
 // 选择里面的小类车
 const handleChooseSubCar = (car) => {
@@ -317,10 +316,10 @@ const handleSureChoose = () => {
         item.choosedNum = choosed.length;
         choosed.forEach((i) => {
           if (minPrice == 0 || minPrice > i.estimatePrice) {
-            minPrice = i.estimatePrice;
+            minPrice = i.estimatePrice || 0;
           }
           if (maxPrice == 0 || maxPrice < i.estimatePrice) {
-            maxPrice = i.estimatePrice;
+            maxPrice = i.estimatePrice || 0;
           }
           i.vehicleModelLevel = item.vehicleModelLevel;
         });
@@ -505,8 +504,8 @@ const initMap = async () => {
         map.setFitView(
           [startMarker, endMarker, centerText, startText, endText],
           true,
-          [75, 75, 75, 80],
-          17
+          [80, 80, 80, 80],
+          19
         );
       }
     }
@@ -751,7 +750,7 @@ onMounted(() => {
         <div class="price-info">
           <div>
             <div>
-              预估<span class="forecast">{{ item.priceStr }}</span
+              预估<span class="forecast">{{ item.priceStr || 0 }}</span
               >元
             </div>
             <!-- <div class="favorable">
@@ -889,11 +888,11 @@ onMounted(() => {
                 alt=""
               />
               <div class="favorable">
-                <span class="forecast">{{ item.estimatePrice }}</span
+                <span class="forecast">{{ item.estimatePrice || 0 }}</span
                 >元
                 <div v-if="item.discountPrice" class="favorable">
                   优惠<span class="favorable-price"
-                    >-{{ item.discountPrice }}</span
+                    >-{{ item.discountPrice || 0 }}</span
                   >元
                 </div>
               </div>
