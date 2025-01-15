@@ -74,7 +74,7 @@ const setStartAndEnd = async (res) => {
   map.add(startMarker);
   map.add(endMarker);
 
-  if (!["2", "3", "4"].includes(res.orderState)) {
+  if (!["2", "3", "4", "5", "6"].includes(res.orderState)) {
     // 创建文本标记
     const startText = new AMap.Text({
       text: `<div style="display:flex;align-items:center;"><div style="font-size:0.86rem;width: 100px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;font-weight: 700">${res.startAddress}</div></div>`,
@@ -166,9 +166,13 @@ function getOrderDetail(logId, orderNo) {
       if (["2", "3"].includes(orderDetail.orderState)) {
         setStartAndEnd(orderDetail.order);
       }
-      if (["4", "5", "6"].includes(orderDetail.orderState)) {
+      if (["4"].includes(orderDetail.orderState)) {
         map.clearMap();
         getPlanInfo(orderDetail.order);
+      }
+      if (["5", "6"].includes(orderDetail.orderState)) {
+        map.clearMap();
+        getRealTrip(orderDetail.order);
       }
     });
   }, 2000);
@@ -253,13 +257,9 @@ function getDriverLocation(order) {
 }
 
 function getPlanInfo(orderDetail) {
-  let url = "/app/hailing/order/path/planning/info";
-  if (orderDetail.orderState === "6") {
-    url = "/app/hailing/order/real/trip";
-  }
   request({
-    url: url,
-    method: orderDetail.orderState === "6" ? "GET" : "POST",
+    url: "/app/hailing/order/path/planning/info",
+    method: "POST",
     headers: {
       Authorization: route.query.token,
     },
@@ -267,16 +267,42 @@ function getPlanInfo(orderDetail) {
       phone: orderDetail.passengerPhone,
       orderNo: orderDetail.orderNo,
     },
+  }).then((res) => {
+    const { path, ...rest } = res;
+    if (path) {
+      const pathArray = path
+        .split(";")
+        .map(function (item) {
+          var coords = item.split(",");
+          return [parseFloat(coords[1]), parseFloat(coords[0])];
+        })
+        .filter(function (item) {
+          return item[0] && item[1];
+        });
+      updatePosition(pathArray, { ...rest, ...orderDetail });
+    } else {
+      getOrderDetail(route.query.logId, route.query.orderNo);
+    }
+  });
+}
+
+function getRealTrip(orderDetail) {
+  request({
+    url: "/app/hailing/order/real/trip",
+    method: "GET",
+    headers: {
+      Authorization: route.query.token,
+    },
     params: {
       orderNo: orderDetail.orderNo,
     },
   }).then((res) => {
-    const { path, ...rest } = res;
-    const pathArray = path
+    const { polyline, ...rest } = res;
+    const pathArray = polyline
       .split(";")
       .map(function (item) {
         var coords = item.split(",");
-        return [parseFloat(coords[1]), parseFloat(coords[0])];
+        return [parseFloat(coords[0]), parseFloat(coords[1])];
       })
       .filter(function (item) {
         return item[0] && item[1];
@@ -289,9 +315,10 @@ const polyline = ref(null);
 let driving = null;
 function updatePosition(pathArray, info) {
   console.log({ pathArray });
+  console.log({ info });
   setStartAndEnd({
-    startLngtitude: info.longitude,
-    startLatitude: info.latitude,
+    startLngtitude: info.longitude || pathArray[0][0],
+    startLatitude: info.latitude || pathArray[0][1],
     endLngtitude: pathArray[pathArray.length - 1][0],
     endLatitude: pathArray[pathArray.length - 1][1],
     orderState: info.orderState,
