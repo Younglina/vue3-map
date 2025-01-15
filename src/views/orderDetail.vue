@@ -576,7 +576,7 @@ function getPayParam(order) {
       Authorization: route.query.token,
     },
     data: {
-      openId: "oXPic7VMwvkXXibqg5ltLkp_sDfE",
+      openId: "o8VSL68Pw5ghRKBOIch6LAX8Hddw",
       orderNo: order.orderNo,
       payType: 1,
       payAction: 4,
@@ -591,20 +591,15 @@ function getPayParam(order) {
 
 function cancelPay(type) {
   if (type === "cancel") return (showPayTypeDialog.value = false);
-  getPayParam(orderDetail.order);
-  // request({
-  //   url: "/app/hailing/order/pay",
-  //   method: "POST",
-  //   headers: {
-  //     Authorization: route.query.token,
-  //   },
-  //   data: {
-  //     logId: orderDetail.orderNo,
-  //     payType: 1,
-  //   },
-  // }).then((res) => {
-  //   console.log(res);
-  // });
+  // getPayParam(orderDetail.order);
+  const order = orderDetail.order;
+  wx.miniProgram.navigateTo({
+    url: `/pages/pay/index?orderNo=${order.orderNo}&businessType=${
+      order.businessType
+    }&payAmount=${order.orderAmount}&subject=${encodeURIComponent(
+      `${order.startAddress} - ${order.endAddress}出行费用`
+    )}&payType=${choosePayType.value}&payAction=4`,
+  });
 }
 </script>
 <template>
