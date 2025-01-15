@@ -13,7 +13,7 @@ function handleSure(flag) {
         mapData.name
       )}&address=${encodeURIComponent(mapData.address)}&location=${
         mapData.longitude
-      },${mapData.latitude}&idx=${route.query.idx}`;
+      },${mapData.latitude}&idx=${route.query.idx}&type=${route.query.type}`;
     }
     wx.miniProgram.redirectTo({
       url: `/pages/trajectory/addPoint${query}`,
@@ -33,8 +33,8 @@ function handleLocationInfo(data) {
       :showLocationIcon="false"
     />
     <div class="bottom-wrap">
-      <div @click="handleSure(false)">取消</div>
-      <div @click="handleSure(true)">确定</div>
+      <div class="btn" @click="handleSure(false)">取消</div>
+      <div class="btn" @click="handleSure(true)">确定</div>
     </div>
   </div>
 </template>
@@ -42,5 +42,6 @@ function handleLocationInfo(data) {
 .map-choose-wrap {
   width: 100%;
   height: 100%;
+  padding-bottom: 20px;
 }
 </style>

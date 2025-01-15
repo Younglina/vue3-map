@@ -1,6 +1,6 @@
 <script setup>
 import AMapLoader from "@amap/amap-jsapi-loader";
-import { ref, onMounted, computed, reactive } from "vue";
+import { ref, onMounted, computed, reactive, watch } from "vue";
 import { ORDER_STATUS } from "../utils/constant";
 import moment from "moment";
 import { useRoute, useRouter } from "vue-router";
@@ -29,7 +29,7 @@ async function initMap(order) {
     center: [order.startLngtitude, order.startLatitude],
   });
   // 司机出发 司机到达都不用, 会有地方加载
-  if (["2", "3"].includes(order.orderState)) {
+  if (["1", "2", "3"].includes(order.orderState)) {
     setStartAndEnd(order);
   }
 }
@@ -45,7 +45,7 @@ const setStartAndEnd = async (res) => {
       image: startIcon,
       imageSize: new AMap.Size(34, 34),
     }),
-    offset: new AMap.Pixel(-12, -34),
+    offset: new AMap.Pixel(-16, -24),
   });
 
   let endMarker = new AMap.Marker({
@@ -55,7 +55,7 @@ const setStartAndEnd = async (res) => {
       image: endIcon,
       imageSize: new AMap.Size(34, 34),
     }),
-    offset: new AMap.Pixel(-12, -34),
+    offset: new AMap.Pixel(-16, -24),
   });
   if (["2", "3"].includes(res.orderState)) {
     try {
@@ -91,7 +91,7 @@ const setStartAndEnd = async (res) => {
         "min-width": "116px",
         "text-align": "center",
       },
-      offset: new AMap.Pixel(0, -32),
+      offset: new AMap.Pixel(0, -20),
     });
 
     const endText = new AMap.Text({
@@ -109,7 +109,7 @@ const setStartAndEnd = async (res) => {
         "min-width": "80px",
         "text-align": "center",
       },
-      offset: new AMap.Pixel(0, -32),
+      offset: new AMap.Pixel(0, -20),
     });
     map.add(startText);
     map.add(endText);
@@ -130,17 +130,18 @@ const businessData = {
 };
 
 const orderDetail = reactive({});
-function getOrderDetail(logId, orderNo) {
+function getOrderDetail(orderNo, logId) {
   let interval = setInterval(() => {
     request({
       url: "/app/common/order/get",
       method: "POST",
       headers: {
-        Authorization: route.query.token,
+        Authorization:
+          route.query.token || localStorage.getItem("ZSX_WX_TOKEN"),
       },
       data: {
-        logId,
         orderNo,
+        logId,
       },
     }).then(async (res) => {
       console.log(res);
@@ -215,7 +216,7 @@ function handleReOrder() {
   //           logId: res.logId,
   //         },
   //       });
-  //       getOrderDetail(res.logId);
+  //       getOrderDetail(res.orderNo, res.logId);
   //     })
   //     .catch((err) => {
   //       showToast(err.data.userTip);
@@ -225,19 +226,24 @@ function handleReOrder() {
     url: "/app/common/order/add",
     method: "POST",
     headers: {
-      Authorization: route.query.token,
+      Authorization: route.query.token || localStorage.getItem("ZSX_WX_TOKEN"),
     },
     data: {
       ...orderData,
     },
   }).then((res) => {
-    router.replace({
-      path: "/orderDetail",
-      query: {
-        logId: res.logId,
-      },
-    });
-    getOrderDetail(res.logId, res.orderNo);
+    // router.replace({
+    //   path: `/orderDetail/${new Date().getTime()}`,
+    //   query: {
+    //     orderNo: res.orderNo,
+    //     logId: res.logId,
+    //   },
+    // });
+    window.location.hash = `#/orderDetail/${new Date().getTime()}?orderNo=${
+      orderData.orderNo
+    }&logId=${res.logId}`;
+    window.location.reload();
+    getOrderDetail(res.orderNo, res.order.logId);
   });
   // }
 }
@@ -248,7 +254,7 @@ function getDriverLocation(order) {
     url: "/app/common/driver/position/get",
     method: "POST",
     headers: {
-      Authorization: route.query.token,
+      Authorization: route.query.token || localStorage.getItem("ZSX_WX_TOKEN"),
     },
     data: {
       driverId: order.driverId,
@@ -261,7 +267,7 @@ function getPlanInfo(orderDetail) {
     url: "/app/hailing/order/path/planning/info",
     method: "POST",
     headers: {
-      Authorization: route.query.token,
+      Authorization: route.query.token || localStorage.getItem("ZSX_WX_TOKEN"),
     },
     data: {
       phone: orderDetail.passengerPhone,
@@ -281,7 +287,7 @@ function getPlanInfo(orderDetail) {
         });
       updatePosition(pathArray, { ...rest, ...orderDetail });
     } else {
-      getOrderDetail(route.query.logId, route.query.orderNo);
+      getOrderDetail(route.query.orderNo, route.query.logId);
     }
   });
 }
@@ -291,7 +297,7 @@ function getRealTrip(orderDetail) {
     url: "/app/hailing/order/real/trip",
     method: "GET",
     headers: {
-      Authorization: route.query.token,
+      Authorization: route.query.token || localStorage.getItem("ZSX_WX_TOKEN"),
     },
     params: {
       orderNo: orderDetail.orderNo,
@@ -314,11 +320,9 @@ function getRealTrip(orderDetail) {
 const polyline = ref(null);
 let driving = null;
 function updatePosition(pathArray, info) {
-  console.log({ pathArray });
-  console.log({ info });
   setStartAndEnd({
-    startLngtitude: info.longitude || pathArray[0][0],
-    startLatitude: info.latitude || pathArray[0][1],
+    startLngtitude: pathArray[0][0] || info.longitude,
+    startLatitude: pathArray[0][1] || info.latitude,
     endLngtitude: pathArray[pathArray.length - 1][0],
     endLatitude: pathArray[pathArray.length - 1][1],
     orderState: info.orderState,
@@ -338,17 +342,6 @@ function updatePosition(pathArray, info) {
     polyline.value.setPath(pathArray);
     polyline.value.setMap(map);
   }
-  // 路径规划
-  // driving = new AMap.Driving({
-  //   map: map,
-  //   panel: false,
-  // });
-  // // 规划路线
-  // driving.search(
-  //   [info.longitude, info.latitude],
-  //   [info.endLngtitude, info.endLatitude],
-  //   (status, result) => {
-  //     if (status === "complete") {
   // 添加路程信息标记
   const centerText = new AMap.Text({
     text: `<div style="font-size:12px">距离目的地估计${(
@@ -372,14 +365,6 @@ function updatePosition(pathArray, info) {
       getPlanInfo(info);
     }, 3000);
   }
-  // setTimeout(() => {
-  //   getPlanInfo(info);
-  // }, 3000);
-  // }
-  // }
-  // );
-  // 更新地图中心点以跟随轨迹
-  // map.setCenter([info.longitude, info.latitude]);
 }
 const formatDuration = (seconds) => {
   if (seconds < 60) {
@@ -416,7 +401,7 @@ function getCancelReason() {
     url: "/app/common/syscode/list",
     method: "POST",
     headers: {
-      Authorization: route.query.token,
+      Authorization: route.query.token || localStorage.getItem("ZSX_WX_TOKEN"),
     },
     data: {
       typeCode: "HAILING_ORDER_CANCEL_DESC_TYPE",
@@ -430,7 +415,7 @@ function getCancelAmount() {
     url: "/app/hailing/order/cancel/amount",
     method: "POST",
     headers: {
-      Authorization: route.query.token,
+      Authorization: route.query.token || localStorage.getItem("ZSX_WX_TOKEN"),
     },
     data: {
       logId: orderDetail.order.logId,
@@ -448,7 +433,8 @@ function cancelOrder(type) {
       url: "/app/common/order/cancel",
       method: "POST",
       headers: {
-        Authorization: route.query.token,
+        Authorization:
+          route.query.token || localStorage.getItem("ZSX_WX_TOKEN"),
       },
       data: {
         orderNo: orderDetail.orderNo,
@@ -459,7 +445,7 @@ function cancelOrder(type) {
     }).then((res) => {
       if (res.logId) {
         showToast("取消成功");
-        getOrderDetail(res.logId);
+        getOrderDetail(res.orderNo, res.logId);
       }
     });
   }
@@ -467,6 +453,18 @@ function cancelOrder(type) {
     showCancleDialog.value = false;
     chooseReason.value = "";
   }
+}
+
+function changeEndAddress() {
+  wx.miniProgram.navigateTo({
+    url: `/pages/commonChooseArea/index?type=changeEndAddress&orderNo=${orderDetail.orderNo}&logId=${orderDetail.order.logId}`,
+  });
+}
+
+function orderAddPoint() {
+  wx.miniProgram.navigateTo({
+    url: `/pages/trajectory/addPoint?isOrderAddPoint=orderAddPoint&orderNo=${orderDetail.orderNo}&logId=${orderDetail.order.logId}`,
+  });
 }
 
 function callDriver() {
@@ -482,7 +480,7 @@ function callPolice() {
     url: "/app/hailing/passenger/alarm/oneTouch",
     method: "POST",
     headers: {
-      Authorization: route.query.token,
+      Authorization: route.query.token || localStorage.getItem("ZSX_WX_TOKEN"),
     },
     data: {
       alarmTime: moment().format("YYYY-MM-DD HH:mm:ss"),
@@ -535,16 +533,19 @@ const contactService = () => {
     });
 };
 
+watch(
+  () => route.params,
+  () => {
+    console.log("orderDetail watch", route.query);
+    if (route.query.type === "changeEndAddress") {
+      getOrderDetail(route.query.orderNo, route.query.logId);
+    }
+  },
+  { deep: true, immediate: true }
+);
+
 onMounted(async () => {
-  getOrderDetail(route.query.logId, route.query.orderNo);
-  // axios("/api/signature?url=" + encodeURIComponent(window.location.href));
-  // const appdsata = {
-  //   appId: "wx78eaa63b82d9edf1",
-  //   nonceStr: "YWW5ZIXLWlvYno4I",
-  //   timestamp: 1735182029,
-  //   signature: "67920b72be7d7496544c755bebacb2c4c037fcdc",
-  //   url: "http://localhost:5173/#/orderDetail?logId=1871799246868889602&token=MTUxNzk4MTY4ODN8emgwMDAwMnwyMDI0LTEyLTI1IDE3OjI1OjA4",
-  // };
+  getOrderDetail(route.query.orderNo, route.query.logId);
   getCancelReason();
 });
 
@@ -568,30 +569,8 @@ const payTypeList = [
   // { name: "全民付-云闪付", value: "26" },
 ];
 
-function getPayParam(order) {
-  request({
-    url: "/app/pay/order/payParam",
-    method: "POST",
-    headers: {
-      Authorization: route.query.token,
-    },
-    data: {
-      openId: "o8VSL68Pw5ghRKBOIch6LAX8Hddw",
-      orderNo: order.orderNo,
-      payType: 1,
-      payAction: 4,
-      businessType: order.businessType,
-      payAmount: order.orderAmount,
-      subject: `${order.startAddress} - ${order.endAddress}出行费用`,
-    },
-  }).then((res) => {
-    console.log(res);
-  });
-}
-
 function cancelPay(type) {
   if (type === "cancel") return (showPayTypeDialog.value = false);
-  // getPayParam(orderDetail.order);
   const order = orderDetail.order;
   wx.miniProgram.navigateTo({
     url: `/pages/pay/index?orderNo=${order.orderNo}&businessType=${
@@ -660,16 +639,29 @@ function cancelPay(type) {
           "
         >
           <div>
-            <div class="car-type-info">
+            <div
+              class="car-type-info"
+              v-if="orderDetail.order.vehicleModelLevel"
+            >
               <span class="car-type">{{
                 businessData[orderDetail.order.vehicleModelLevel]
               }}</span>
-              <span class="car-type-name">曹操出行</span>
+              <span class="car-type-name">{{
+                orderDetail.order.vehicleType
+              }}</span>
             </div>
             <div class="car-num">{{ orderDetail.order.plateNum }}</div>
             <div>
-              <span class="car-name">凯迪拉克·白</span>
-              <span class="car-dirver">{{ orderDetail.order.driverName }}</span>
+              <span class="car-name"
+                >{{ orderDetail.order.vehicleModel }}
+                <span v-if="orderDetail.order.vehicleColor"
+                  >·
+                  {{ orderDetail.order.vehicleColor }}
+                </span>
+              </span>
+              <span class="car-dirver">
+                {{ orderDetail.order.driverName }}</span
+              >
             </div>
           </div>
           <div class="car-phone" @click="callDriver">
@@ -680,7 +672,7 @@ function cancelPay(type) {
         <div class="paidan-wrap" v-if="orderDetail.orderState == '1'">
           <div>
             <div>正在同时呼叫{{ orderDetail.totalChooseCarTypeNum }}个车型</div>
-            <div>经济型1</div>
+            <!-- <div>经济型1</div> -->
           </div>
           <div class="div-btn" @click="cancelOrder('show')">取消订单</div>
         </div>
@@ -691,9 +683,37 @@ function cancelPay(type) {
         "
         class="order-btns"
       >
-        <div class="action-btn" @click="cancelOrder('show')">
+        <div
+          v-if="orderDetail.orderState != 4"
+          class="action-btn"
+          @click="cancelOrder('show')"
+        >
           <img src="@/assets/close.svg" alt="" />
           <span>取消订单</span>
+        </div>
+        <div
+          v-if="orderDetail.orderState == 4"
+          class="action-btn"
+          @click="orderAddPoint"
+        >
+          <img
+            class="locationColorIcon"
+            src="@/assets/locationColorIcon.png"
+            alt=""
+          />
+          <span>+途径点</span>
+        </div>
+        <div
+          v-if="orderDetail.orderState == 4"
+          class="action-btn"
+          @click="changeEndAddress"
+        >
+          <img
+            class="locationColorIcon"
+            src="@/assets/locationColorIcon.png"
+            alt=""
+          />
+          <span>更改目的地</span>
         </div>
         <div class="action-btn" @click="callPolice">
           <img src="@/assets/110.png" alt="" />
@@ -862,7 +882,8 @@ function cancelPay(type) {
           总额<span class="price">{{ orderDetail.order.orderAmount }}</span
           >元
         </div>
-        <div class="btn min-btn" @click="showPayTypeDialog = true">去支付</div>
+        <div class="btn min-btn" @click="cancelPay(true)">去支付</div>
+        <!-- showPayTypeDialog = true -->
       </div>
 
       <van-dialog
@@ -885,7 +906,7 @@ function cancelPay(type) {
         </div>
       </van-dialog>
 
-      <van-dialog
+      <!-- <van-dialog
         v-model:show="showPayTypeDialog"
         title="请选择支付方式"
         show-cancel-button
@@ -903,7 +924,7 @@ function cancelPay(type) {
             >
           </van-radio-group>
         </div>
-      </van-dialog>
+      </van-dialog> -->
     </template>
   </div>
 </template>
@@ -1051,6 +1072,9 @@ function cancelPay(type) {
       width: 24px;
       height: 24px;
       margin-bottom: 4px;
+    }
+    .locationColorIcon {
+      width: 20px;
     }
   }
 }
