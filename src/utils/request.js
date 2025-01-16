@@ -24,7 +24,7 @@ const request = (options) => {
         resolve(res.data);
       },
       (err) => {
-        console.log(err)
+        console.log(err.response)
         showToast(err.response.data?.userTip || '服务异常');
         reject(err.response);
       }
