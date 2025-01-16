@@ -621,7 +621,7 @@ const handleOrder = () => {
   }, []);
   const orderData = {
     businessType: currentCarType.value === "firm" ? "11" : "5",
-    orderType: 1 || currentDateType.value,
+    orderType: useCarTimeStr.value ? currentDateType.value : 1,
     endAddress: markerInfo.tname,
     endLatitude: markerInfo.tlat,
     endLngtitude: markerInfo.tlng,
@@ -687,11 +687,11 @@ const handleOrder = () => {
     url: `/pages/transfer/index?page=ZSX_ORDER_CONFIRM`,
   });
 };
-// const mountedData = ref("");
+const mountedData = ref("");
 onMounted(() => {
   initMap();
   setCarType(window.localStorage.getItem("CAR_TYPE") || "firm");
-  // mountedData.value = new Date();
+  mountedData.value = new Date();
 });
 </script>
 
@@ -704,7 +704,7 @@ onMounted(() => {
           :class="currentCarType === 'firm' ? 'active' : ''"
           @click="setCarType('firm')"
         >
-          企业用车
+          企业用车{{ mountedData.toString() }}
         </div>
         <div
           :class="currentCarType === 'person' ? 'active' : ''"

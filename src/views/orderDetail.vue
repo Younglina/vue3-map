@@ -443,6 +443,7 @@ function cancelOrder(type) {
         logId: orderDetail.order.logId,
       },
     }).then((res) => {
+      console.log(res)
       if (res.logId) {
         showToast("取消成功");
         getOrderDetail(res.orderNo, res.logId);
@@ -684,7 +685,7 @@ function cancelPay(type) {
         class="order-btns"
       >
         <div
-          v-if="orderDetail.orderState != 4"
+          v-if="!['4','5','6'].includes(orderDetail.orderState)"
           class="action-btn"
           @click="cancelOrder('show')"
         >

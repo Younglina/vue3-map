@@ -102,7 +102,7 @@ const handleSelectPOI = (item) => {
       },
     });
   } else if (route.query.type === "to") {
-    wx.miniProgram.redirectTo({
+    wx.miniProgram.navigateTo({
       url: `/pages/trajectory/index?flng=${route.query.longitude}&flat=${
         route.query.latitude
       }&fname=${encodeURIComponent(
