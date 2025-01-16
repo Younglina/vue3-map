@@ -4,6 +4,7 @@ import Components from "unplugin-vue-components/vite";
 import { VantResolver } from "@vant/auto-import-resolver";
 
 export default {
+  base: "/zsx",
   plugins: [
     vue(),
     AutoImport({
