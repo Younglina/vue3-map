@@ -593,6 +593,7 @@ watch(
 );
 
 const handleOrder = () => {
+  try{
   if (currentCarType.value === "person") {
     if (useCarTime.value[0] === "预约") {
       showToast("请选择时间");
@@ -659,7 +660,7 @@ const handleOrder = () => {
     orderData.companionInfos = passengerInfo.companionInfos;
     orderData.togetherOrder = ~~passengerInfo.companionInfos.length > 0;
   }
-  if (familyInfo.familyList) {
+  if (familyInfo.familyList && familyInfo.familyList.length) {
     orderData.passengerName = familyInfo.familyList[0].name;
     orderData.passengerPhone = familyInfo.familyList[0].phone;
     orderData.remark = familyInfo.remark;
@@ -686,6 +687,10 @@ const handleOrder = () => {
   wx.miniProgram.navigateTo({
     url: `/pages/transfer/index?page=ZSX_ORDER_CONFIRM`,
   });
+}catch(e){
+  console.log(e);
+  showToast(e.message);
+}
 };
 // const mountedData = ref("");
 onMounted(() => {
@@ -809,15 +814,15 @@ onMounted(() => {
           <img class="right-icon" src="@/assets/right.png" alt="" />
         </div>
       </div>
-      <div class="btns">
-        <div class="bottom-price-wrap">
+      <div class="bottom-wrap">
+        <div class="price">
           <div>
-            预估<span class="bottom-price">{{ totalMinMaxPriceStr }}</span
+            预估<span class="amount">{{ totalMinMaxPriceStr }}</span
             >元
           </div>
           <div class="bottom-choose">已选{{ totalChooseCarTypeNum }}种车型</div>
         </div>
-        <div class="bottom-btn" @click="handleOrder">下一步</div>
+        <div class="btn" @click="handleOrder">下一步</div>
       </div>
 
       <!-- 日期时间选择 -->
@@ -919,6 +924,7 @@ onMounted(() => {
   position: relative;
   display: flex;
   flex-direction: column;
+  padding-bottom: 60px;
 }
 
 .map-wrap {
@@ -1078,34 +1084,6 @@ onMounted(() => {
       justify-content: flex-end;
     }
   }
-  .btns {
-    display: flex;
-    justify-content: space-between;
-    border-radius: 10px;
-    color: #fff;
-    background: #3d1a00;
-    padding-left: 16px;
-    .bottom-btn {
-      border-radius: 10px;
-      background: linear-gradient(90deg, #f3741f 0%, #f4b809 100%);
-      padding: 1rem 2.14rem;
-      font-size: 1rem;
-      text-align: center;
-    }
-    .bottom-price-wrap {
-      font-size: 0.86rem;
-      padding: 4px 0;
-    }
-    .bottom-price {
-      font-size: 16px;
-      font-weight: 900;
-      padding: 0 3px;
-      margin-bottom: 2px;
-    }
-    .bottom-choose {
-      font-size: 12px;
-    }
-  }
 }
 .popup-carlist {
   padding: 12px;
@@ -1183,5 +1161,21 @@ onMounted(() => {
   background-color: #467ef7;
   color: #ffffff;
   border: unset;
+}
+
+.bottom-wrap {
+  .price {
+    font-size: 14px;
+  }
+  >div{
+    flex:1;
+  }
+
+  .price .amount {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ff4d4f;
+    margin: 0 5px;
+  }
 }
 </style>

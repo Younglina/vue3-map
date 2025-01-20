@@ -512,7 +512,8 @@ const shareTrip = () => {
   //   },
   // });
   wx.miniProgram.navigateTo({
-    url: `/pages/order/share`,
+    url: `/pages/order/share?orderNo=${orderDetail.orderNo}&logId=${
+      orderDetail.order.logId}`,
   });
 };
 
