@@ -64,7 +64,13 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   if (to.meta.title) {
-    document.title = to.meta.title;
+    if (to.query.type === "to") {
+      document.title = "下车地点选择";
+    } else if (to.query.type === "from") {
+      document.title = "上车地点选择";
+    } else {
+      document.title = to.meta.title;
+    }
   }
   next();
 });

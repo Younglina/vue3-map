@@ -8,6 +8,7 @@ import request from "@/utils/request";
 import taxiIcon from "@/assets/taxi.png";
 import haixiaIcon from "@/assets/haixia.png";
 import fastIcon from "@/assets/fast.png";
+import { showToast } from "vant";
 
 const vehicleModelLevel = {
   fastCar: fastIcon,
@@ -25,51 +26,6 @@ window._AMapSecurityConfig = {
   securityJsCode: "9537a21ee34efb281c3fe92b4f1055bf",
 };
 
-// 时间选择
-const useDateTypes = [
-  { value: "1", label: "现在" },
-  { value: "2", label: "预约" },
-  { value: "4", label: "日租" },
-  { value: "5", label: "半日租" },
-];
-const currentDateType = ref("1");
-const useCarTime = ref([]);
-const useCarTimeStr = ref("");
-const showDatePicker = ref(false);
-const dateColumns = generateDateArray();
-const selectedDate = ref([]);
-const columns = [
-  dateColumns.dateArray,
-  dateColumns.hourArray,
-  dateColumns.minuteArray,
-];
-function changeDateType(v, dates) {
-  currentDateType.value = v;
-  let date = dates || new Date().getTime();
-  if (v === "2") {
-    useCarTime.value[0] = [moment(date).format("MM-DD HH:mm")];
-  }
-  if (v === "4") {
-    useCarTime.value[0] = moment(date).format("MM-DD HH:mm");
-    useCarTime.value[1] = moment(date + 86400000).format("MM-DD HH:mm");
-  }
-  if (v === "5") {
-    useCarTime.value[0] = moment(date).format("MM-DD HH:mm");
-    useCarTime.value[1] = moment(date + 43200000).format("MM-DD HH:mm");
-  }
-}
-const onDateConfirm = (value) => {
-  const v = value.selectedValues;
-  changeDateType(
-    currentDateType.value,
-    new Date(`${v[0]} ${v[1]}:${v[2]}:00`).getTime()
-  );
-  useCarTimeStr.value = moment(`${v[0]} ${v[1]}:${v[2]}:00`).format(
-    "YYYY-MM-DD HH:mm:ss"
-  );
-  showDatePicker.value = false;
-};
-
 // 用车事由
 const useCarReason = ref("");
 const toReason = () => {
@@ -82,12 +38,7 @@ const toReason = () => {
 const currentCarType = ref("firm");
 const setCarType = (type) => {
   currentCarType.value = type;
-  if (type === "person") {
-    currentDateType.value = "2";
-    useCarTime.value[0] = [moment().format("MM-DD HH:mm")];
-  } else {
-    currentDateType.value = "1";
-  }
+  currentDateType.value = "1";
 };
 
 const carList = ref([]);
@@ -115,6 +66,7 @@ const handleChoosePrice = (item) => {
   item.choosed = !item.choosed;
 };
 
+const currentDateType = ref("1");
 const getBusinessList = () => {
   request({
     url: "/app/hailing/vehicle/model/level",
@@ -123,29 +75,10 @@ const getBusinessList = () => {
       Authorization: route.query.token,
     },
     data: {
-      businessType: "5",
+      businessType: currentCarType.value === "person" ? "5" : "11",
+      orderType: currentDateType.value,
     },
   }).then((businessData) => {
-    // const businessData = [
-    //   {
-    //     vehicleModelLevel: "fastCar",
-    //     vehicleModelLevelName: "快车",
-    //     carTypes: [{ carTypeId: "HS001", carTypeName: "滴滴快车" }],
-    //   },
-    //   {
-    //     vehicleModelLevel: "specialCar",
-    //     vehicleModelLevelName: "专车",
-    //     carTypes: [
-    //       { carTypeId: "HS002", carTypeName: "曹操专车" },
-    //       { carTypeId: "ZSX001", carTypeName: "掌上行专车" },
-    //     ],
-    //   },
-    //   {
-    //     vehicleModelLevel: "taxi",
-    //     vehicleModelLevelName: "出租车",
-    //     carTypes: [{ carTypeId: "WXDW001", carTypeName: "优享出租" }],
-    //   },
-    // ];
     if (businessData && businessData.length > 0) {
       businessData.forEach((item) => {
         item.choosedNum = 0;
@@ -355,12 +288,58 @@ const handleSureChoose = () => {
         : `${totalMinMaxPrice.min}~${totalMinMaxPrice.max}`;
   }
 };
+
+// 时间选择
+const useDateTypes = [
+  { value: "1", label: "现在" },
+  { value: "2", label: "预约" },
+  { value: "4", label: "日租" },
+  { value: "5", label: "半日租" },
+];
+const useCarTime = ref([]);
+const useCarTimeStr = ref("");
+const showDatePicker = ref(false);
+const dateColumns = generateDateArray();
+const selectedDate = ref([]);
+const columns = [
+  dateColumns.dateArray,
+  dateColumns.hourArray,
+  dateColumns.minuteArray,
+];
+function changeDateType(v, dates) {
+  currentDateType.value = v;
+  getBusinessList();
+  let date = dates || new Date().getTime();
+  if (v === "2") {
+    useCarTime.value = [moment(date).format("MM-DD HH:mm")];
+  }
+  if (v === "4") {
+    useCarTime.value[0] = moment(date).format("MM-DD HH:mm");
+    useCarTime.value[1] = moment(date + 86400000).format("MM-DD HH:mm");
+  }
+  if (v === "5") {
+    useCarTime.value[0] = moment(date).format("MM-DD HH:mm");
+    useCarTime.value[1] = moment(date + 43200000).format("MM-DD HH:mm");
+  }
+}
+const onDateConfirm = (value) => {
+  const v = value.selectedValues;
+  changeDateType(
+    currentDateType.value,
+    new Date(`${v[0].replaceAll("-", "/")} ${v[1]}:${v[2]}:00`).getTime()
+  );
+  useCarTimeStr.value = moment(`${v[0]} ${v[1]}:${v[2]}:00`).format(
+    "YYYY-MM-DD HH:mm:ss"
+  );
+  showDatePicker.value = false;
+};
+
 const toPriceInfoPage = (item, vehicleModelLevel) => {
   localStorage.setItem(
     "ZSX_PRICEINFO",
     JSON.stringify({ ...item, vehicleModelLevel })
   );
-  wx.miniProgram.redirectTo({
+  wx.miniProgram.navigateTo({
     url: `/pages/transfer/index?page=ZSX_PRICEINFO`,
   });
 };
@@ -501,12 +480,16 @@ const initMap = async () => {
 
         map.add(centerText);
         // 调整地图视野以包含所有标记点和路线
-        map.setFitView(
-          [startMarker, endMarker, centerText, startText, endText],
-          true,
-          [80, 80, 80, 80],
-          19
-        );
+        // Get all overlays including the driving route
+        setTimeout(() => {
+          const overlays = map.getAllOverlays();
+          map.setFitView(
+            overlays,
+            true,
+            [80, 80, 60, 80], // Increased padding
+            19 // Higher zoom level
+          );
+        }, 800);
       }
     }
   );
@@ -593,104 +576,97 @@ watch(
 );
 
 const handleOrder = () => {
-  try{
-  if (currentCarType.value === "person") {
-    if (useCarTime.value[0] === "预约") {
-      showToast("请选择时间");
+  try {
+    const choosedCarType = carList.value.reduce((acc, cur) => {
+      return acc.concat(cur.choosed);
+    }, []);
+    if (
+      ["4", "5"].includes(currentDateType.value) &&
+      choosedCarType.some((item) => item.vehicleModelLevel !== "specialCar")
+    ) {
+      showToast("日租、半日租只能选择专车");
       return;
     }
-    if (familyInfo.familyList.length === 0) {
-      showToast("请输入乘车人");
+    console.log(useCarTime.value);
+    if (currentCarType.value === "film") {
+      if (!passengerInfo.phone) {
+        showToast("请输入乘车人");
+        return;
+      }
+      if (!useCarReason.value) {
+        showToast("选输入用车事由");
+        return;
+      }
+    }
+    if (totalChooseCarTypeNum.value === 0) {
+      showToast("请选择车型");
       return;
     }
-  } else {
-    if (!passengerInfo.phone) {
-      showToast("请输入乘车人");
-      return;
+    const orderData = {
+      businessType: currentCarType.value === "firm" ? "11" : "5",
+      orderType: useCarTimeStr.value ? currentDateType.value : 1,
+      endAddress: markerInfo.tname,
+      endLatitude: markerInfo.tlat,
+      endLngtitude: markerInfo.tlng,
+      endLat: markerInfo.tlat,
+      endLng: markerInfo.tlng,
+      endAddressFull: markerInfo.taddress,
+      startAddress: markerInfo.fname,
+      startLatitude: markerInfo.flat,
+      startLngtitude: markerInfo.flng,
+      startLng: markerInfo.flng,
+      startLat: markerInfo.flat,
+      startAddressFull: markerInfo.faddress,
+      passengerName: passengerInfo.name,
+      passengerPhone: passengerInfo.phone,
+      useCarReason: useCarReason.value,
+      rentDuration: currentDateType.value === "4" ? "24" : "12",
+      useCarTime: useCarTimeStr.value || moment().format("YYYY-MM-DD HH:mm:ss"),
+      totalChooseCarTypeNum: totalChooseCarTypeNum.value,
+      totalMinMaxPriceStr: totalMinMaxPriceStr.value,
+      addCarTypes: choosedCarType.map((item) => {
+        return {
+          carTypeId: item.carTypeId,
+          estimateAmount: item.estimatePrice,
+          estimateId: item.estimateId,
+          vehicleModelLevel: item.vehicleModelLevel,
+        };
+      }),
+      // planningPath: JSON.stringify(planningPath.value),
+    };
+    console.log(orderData);
+    if (
+      passengerInfo.companionInfos.length &&
+      passengerInfo.companionInfos[0].companionPhone
+    ) {
+      orderData.companionInfos = passengerInfo.companionInfos;
+      orderData.togetherOrder = ~~passengerInfo.companionInfos.length > 0;
     }
-    if (!useCarReason.value) {
-      showToast("选输入用车事由");
-      return;
+    if (familyInfo.familyList && familyInfo.familyList.length) {
+      orderData.passengerName = familyInfo.familyList[0].name;
+      orderData.passengerPhone = familyInfo.familyList[0].phone;
+      orderData.remark = familyInfo.remark;
+      orderData.isCallme = familyInfo.isCallme || "1";
+      orderData.togetherOrder = 0;
     }
-  }
-  if (totalChooseCarTypeNum.value === 0) {
-    showToast("请选择车型");
-    return;
-  }
-  const choosedCarType = carList.value.reduce((acc, cur) => {
-    return acc.concat(cur.choosed);
-  }, []);
-  const orderData = {
-    businessType: currentCarType.value === "firm" ? "11" : "5",
-    orderType: useCarTimeStr.value ? currentDateType.value : 1,
-    endAddress: markerInfo.tname,
-    endLatitude: markerInfo.tlat,
-    endLngtitude: markerInfo.tlng,
-    endLat: markerInfo.tlat,
-    endLng: markerInfo.tlng,
-    endAddressFull: markerInfo.taddress,
-    startAddress: markerInfo.fname,
-    startLatitude: markerInfo.flat,
-    startLngtitude: markerInfo.flng,
-    startLng: markerInfo.flng,
-    startLat: markerInfo.flat,
-    startAddressFull: markerInfo.faddress,
-    passengerName: passengerInfo.name,
-    passengerPhone: passengerInfo.phone,
-    useCarReason: useCarReason.value,
-    rentDuration: useDateTypes.value === "4" ? "24" : "12",
-    useCarTime: useCarTimeStr.value || moment().format("YYYY-MM-DD HH:mm:ss"),
-    totalChooseCarTypeNum: totalChooseCarTypeNum.value,
-    totalMinMaxPriceStr: totalMinMaxPriceStr.value,
-    addCarTypes: choosedCarType.map((item) => {
-      return {
-        carTypeId: item.carTypeId,
-        estimateAmount: item.estimatePrice,
-        estimateId: item.estimateId,
-        vehicleModelLevel: item.vehicleModelLevel,
-      };
-    }),
-    // planningPath: JSON.stringify(planningPath.value),
-  };
-  console.log(orderData);
-  if (
-    passengerInfo.companionInfos.length &&
-    passengerInfo.companionInfos[0].companionPhone
-  ) {
-    orderData.companionInfos = passengerInfo.companionInfos;
-    orderData.togetherOrder = ~~passengerInfo.companionInfos.length > 0;
-  }
-  if (familyInfo.familyList && familyInfo.familyList.length) {
-    orderData.passengerName = familyInfo.familyList[0].name;
-    orderData.passengerPhone = familyInfo.familyList[0].phone;
-    orderData.remark = familyInfo.remark;
-    orderData.isCallme = familyInfo.isCallme || "1";
-    orderData.companionInfos = familyInfo.familyList.slice(1).map((item) => {
-      return {
-        companionName: item.name,
-        companionPhone: item.phone,
-      };
+    if (pointList.value.length) {
+      orderData.midwayList = pointList.value.map((item, idx) => {
+        return {
+          midwayAddress: item.address,
+          midwayLongitude: item.location.split(",")[0],
+          midwayLatitude: item.location.split(",")[1],
+          midwayIndex: idx + 1,
+        };
+      });
+    }
+    localStorage.setItem("ZSX_ORDER_CONFIRM", JSON.stringify(orderData));
+    wx.miniProgram.navigateTo({
+      url: `/pages/transfer/index?page=ZSX_ORDER_CONFIRM`,
     });
-    orderData.togetherOrder = ~~orderData.companionInfos.length > 0;
+  } catch (e) {
+    console.log(e);
+    showToast(e.message);
   }
-  if (pointList.value.length) {
-    orderData.midwayList = pointList.value.map((item, idx) => {
-      return {
-        midwayAddress: item.address,
-        midwayLongitude: item.location.split(",")[0],
-        midwayLatitude: item.location.split(",")[1],
-        midwayIndex: idx + 1,
-      };
-    });
-  }
-  localStorage.setItem("ZSX_ORDER_CONFIRM", JSON.stringify(orderData));
-  wx.miniProgram.navigateTo({
-    url: `/pages/transfer/index?page=ZSX_ORDER_CONFIRM`,
-  });
-}catch(e){
-  console.log(e);
-  showToast(e.message);
-}
 };
 // const mountedData = ref("");
 onMounted(() => {
@@ -720,9 +696,12 @@ onMounted(() => {
       </div>
     </div>
     <div class="car-list">
-      <div class="date-type-wrap" v-if="currentCarType === 'firm'">
+      <div class="date-type-wrap">
         <span
-          v-for="item in useDateTypes"
+          v-for="item in useDateTypes.slice(
+            0,
+            currentCarType === 'person' ? 2 : 4
+          )"
           class="date-type"
           :key="item"
           :class="{ active: item.value === currentDateType }"
@@ -806,7 +785,9 @@ onMounted(() => {
       </div>
       <div v-else class="options">
         <div class="item" @click="showDatePicker = true">
-          <span class="title">{{ useCarTime.join(" ~ ") }}</span>
+          <span class="title">{{
+            currentDateType == 1 ? "现在出发" : useCarTime.join(" ~ ")
+          }}</span>
           <img class="right-icon" src="@/assets/right.png" alt="" />
         </div>
         <div class="item text-right" @click="handleAddFamile">
@@ -1167,8 +1148,8 @@ onMounted(() => {
   .price {
     font-size: 14px;
   }
-  >div{
-    flex:1;
+  > div {
+    flex: 1;
   }
 
   .price .amount {

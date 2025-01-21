@@ -8,6 +8,7 @@ import { showToast } from "vant";
 import towgs84 from "@/utils/towgs84";
 
 const currentCity = ref("");
+const currentAreaType = ref("");
 const route = useRoute();
 
 const historySearchList = ref([]);
@@ -15,6 +16,7 @@ let AMap = null;
 window._AMapSecurityConfig = {
   securityJsCode: "9537a21ee34efb281c3fe92b4f1055bf",
 };
+const inputValue = ref("");
 onMounted(() => {
   AMapLoader.load({
     key: "0f20018974e4ab2189ad2d9f8b0a5702",
@@ -30,10 +32,18 @@ onMounted(() => {
   const selectHistory = JSON.parse(
     localStorage.getItem("ZSX_SELECT_HISTORY") || "[]"
   );
+  inputValue.value =
+    route.query.searchName && route.query.searchName !== "undefined"
+      ? route.query.searchName
+      : "";
   historySearchList.value = selectHistory;
+  const t = {
+    from: "请输入起点",
+    to: "请输入终点",
+  };
+  currentAreaType.value = t[route.query.type] || "请输入";
 });
 
-const inputValue = ref("");
 const searchPOIList = ref([]);
 const getPOIByKeyword = (keyword) => {
   AMap.plugin("AMap.PlaceSearch", () => {
@@ -196,7 +206,7 @@ const handleSelectPOI = (item) => {
           <input
             v-model="inputValue"
             class="input-wrap"
-            placeholder="你要去哪儿"
+            :placeholder="currentAreaType"
             type="text"
           />
         </div>
@@ -303,6 +313,8 @@ const handleSelectPOI = (item) => {
   .btn {
     font-weight: 700;
     color: #858b9c;
+    min-width: 40px;
+    text-align: center;
   }
   .search-input {
     position: relative;
@@ -327,6 +339,7 @@ const handleSelectPOI = (item) => {
       color: #41485d;
       font-size: 14px;
       padding: 0 4px;
+      white-space: nowrap;
     }
     .input-wrap {
       font-weight: 700;
@@ -337,6 +350,8 @@ const handleSelectPOI = (item) => {
       background: transparent;
       min-height: 50px;
       outline: none;
+      flex: 1;
+      width: 100%;
       &::placeholder {
         font-weight: 700;
         color: #3475f5;
