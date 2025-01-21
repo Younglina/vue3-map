@@ -716,7 +716,11 @@ onMounted(() => {
       >
         <div class="car-info">
           <img
-            :src="vehicleModelLevel[item.vehicleModelLevel]"
+            :src="
+              vehicleModelLevel[item.vehicleModelLevel]
+                ? vehicleModelLevel[item.vehicleModelLevel]
+                : vehicleModelLevel.taxi
+            "
             alt="vehicleModelLevel"
           />
           <div>
