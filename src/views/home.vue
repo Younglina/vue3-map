@@ -6,6 +6,7 @@ import { watch, reactive, ref } from "vue";
 import { useRoute } from "vue-router";
 
 const currentCity = ref("");
+const navigateLoading = ref(false);
 const mapData = reactive({
   currentAreaName: "",
   address: "",
@@ -76,6 +77,8 @@ function getNearByCar() {
 }
 
 const handleNavigator = (type) => {
+  if(navigateLoading.value) return
+  navigateLoading.value = true
   if (type === "from" || type === "to") {
     wx.miniProgram.navigateTo({
       url: `/pages/commonChooseArea/index?type=${type}&city=${
@@ -85,6 +88,11 @@ const handleNavigator = (type) => {
       }&name=${encodeURIComponent(
         mapData.currentAreaName
       )}&address=${encodeURIComponent(mapData.address)}`,
+      success: () => {
+        setTimeout(() => {
+          navigateLoading.value = false
+        }, 666)
+      }
     });
   }
 };
@@ -116,9 +124,16 @@ const companyAddress = ref({
 });
 
 function toSetCommonArea(type) {
+  if(navigateLoading.value) return
+  navigateLoading.value = true
   const place = type === "home" ? homeAddress.value : companyAddress.value;
   wx.miniProgram.navigateTo({
     url: `/pages/commonChooseArea/index?type=${type}&placeName=${place.placeName}&addressId=${place.addressId}&token=${route.query.token}`,
+    success: () => {
+      setTimeout(() => {
+        navigateLoading.value = false
+      }, 666)
+    }
   });
 }
 
@@ -153,7 +168,7 @@ watch(
     console.log("home watch", route.query);
     currentCity.value = localStorage.getItem("CURRENT_CITY") || "";
     window.localStorage.setItem("ZSX_WX_TOKEN", route.query.token);
-    getAddress();
+    // getAddress();
     // request({
     //   url: "/v1/common/miscellaneous/weather",
     // }).then((res) => {
@@ -269,9 +284,13 @@ watch(
   }
   > div {
     padding: 0 4px;
+    white-space: nowrap;
   }
   .address {
     color: #1985fb;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
@@ -292,8 +311,10 @@ watch(
   border-radius: 50%;
   margin-right: 6px;
   width: 12px;
+  min-width: 12px;
   max-width: 12px;
   height: 12px;
+  min-height: 12px;
   max-height: 12px;
 }
 

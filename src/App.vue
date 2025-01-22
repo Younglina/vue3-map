@@ -50,12 +50,12 @@ body {
   justify-content: space-between;
   align-items: center;
   position: fixed;
-  padding: 10px;
+  padding: 16px;
   box-sizing: border-box;
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 56px;
+  height: 68px;
   background-color: #ffffff;
   box-shadow: 5px -5px 10px #e8e8e8, -5px 5px 10px #ffffff;
 

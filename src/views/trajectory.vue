@@ -39,6 +39,7 @@ const currentCarType = ref("firm");
 const setCarType = (type) => {
   currentCarType.value = type;
   currentDateType.value = "1";
+  resetChoose();
 };
 
 const carList = ref([]);
@@ -271,7 +272,6 @@ const handleSureChoose = () => {
     }
     allChoosed.push(...item.choosed);
   });
-  console.log({ allChoosed });
   // 每次选择以后 重新计算总的选择车型数量，以及总的预估价格范围
   totalChooseCarTypeNum.value = allChoosed.length;
   totalMinMaxPrice.min = Infinity;
@@ -296,7 +296,11 @@ const useDateTypes = [
   { value: "4", label: "日租" },
   { value: "5", label: "半日租" },
 ];
-const useCarTime = ref([]);
+const useCarTimeObj = reactive({
+  2: [],
+  4: [],
+  5: [],
+});
 const useCarTimeStr = ref("");
 const showDatePicker = ref(false);
 const dateColumns = generateDateArray();
@@ -306,20 +310,39 @@ const columns = [
   dateColumns.hourArray,
   dateColumns.minuteArray,
 ];
-function changeDateType(v, dates) {
+function changeDateType(v, date) {
   currentDateType.value = v;
-  getBusinessList();
-  let date = dates || new Date().getTime();
+  resetChoose();
   if (v === "2") {
-    useCarTime.value = [moment(date).format("MM-DD HH:mm")];
-  }
-  if (v === "4") {
-    useCarTime.value[0] = moment(date).format("MM-DD HH:mm");
-    useCarTime.value[1] = moment(date + 86400000).format("MM-DD HH:mm");
-  }
-  if (v === "5") {
-    useCarTime.value[0] = moment(date).format("MM-DD HH:mm");
-    useCarTime.value[1] = moment(date + 43200000).format("MM-DD HH:mm");
+    useCarTimeObj[v] = date
+      ? [moment(date).format("MM-DD HH:mm")]
+      : useCarTimeObj[v].length
+      ? useCarTimeObj[v]
+      : [moment(new Date()).format("MM-DD HH:mm")];
+  } else if (v === "4") {
+    useCarTimeObj[v] = date
+      ? [
+          moment(date).format("MM-DD HH:mm"),
+          moment(date + 86400000).format("MM-DD HH:mm"),
+        ]
+      : useCarTimeObj[v].length
+      ? useCarTimeObj[v]
+      : [
+          moment(new Date()).format("MM-DD HH:mm"),
+          moment(new Date().getTime() + 86400000).format("MM-DD HH:mm"),
+        ];
+  } else if (v === "5") {
+    useCarTimeObj[v] = date
+      ? [
+          moment(date).format("MM-DD HH:mm"),
+          moment(date + 43200000).format("MM-DD HH:mm"),
+        ]
+      : useCarTimeObj[v].length
+      ? useCarTimeObj[v]
+      : [
+          moment(new Date()).format("MM-DD HH:mm"),
+          moment(new Date().getTime() + 43200000).format("MM-DD HH:mm"),
+        ];
   }
 }
 const onDateConfirm = (value) => {
@@ -332,6 +355,22 @@ const onDateConfirm = (value) => {
     "YYYY-MM-DD HH:mm:ss"
   );
   showDatePicker.value = false;
+};
+
+const resetChoose = () => {
+  carList.value.forEach((item) => {
+    item.choosed = [];
+    item.choosedNum = 0;
+    item.priceStr = "-";
+    item.minPrice = Infinity;
+    item.maxPrice = -Infinity;
+  });
+  totalChooseCarTypeNum.value = 0;
+  totalMinMaxPrice.min = Infinity;
+  totalMinMaxPrice.max = -Infinity;
+  totalMinMaxPriceStr.value = "-";
+  Object.keys(cacheCarType).forEach((key) => delete cacheCarType[key]);
+  console.log(cacheCarType, tempCarTypeInfo.value);
 };
 
 const toPriceInfoPage = (item, vehicleModelLevel) => {
@@ -438,7 +477,7 @@ const initMap = async () => {
   const opts = {
     waypoints: [],
   };
-  if (route.query.pointList) {
+  if (route.query.pointList && route.query.pointList.length) {
     const points = JSON.parse(route.query.pointList);
     points.forEach((item) => {
       const [lng, lat] = item.location.split(",");
@@ -531,8 +570,11 @@ const handleAddFamile = () => {
 
 const pointList = ref([]);
 const toAddPoint = () => {
+  console.log(pointList.value);
   wx.miniProgram.navigateTo({
-    url: `/pages/trajectory/addPoint`,
+    url: `/pages/trajectory/addPoint?pointList=${encodeURIComponent(
+      JSON.stringify(pointList.value)
+    )}`,
   });
 };
 
@@ -568,8 +610,11 @@ watch(
       }
     }
     if (route.query.pointList) {
-      pointList.value = JSON.parse(decodeURIComponent(route.query.pointList));
-      initMap();
+      const points = JSON.parse(decodeURIComponent(route.query.pointList));
+      if (points.length > 0) {
+        pointList.value = points;
+        initMap();
+      }
     }
   },
   { deep: true, immediate: true }
@@ -587,12 +632,7 @@ const handleOrder = () => {
       showToast("日租、半日租只能选择专车");
       return;
     }
-    console.log(useCarTime.value);
     if (currentCarType.value === "film") {
-      if (!passengerInfo.phone) {
-        showToast("请输入乘车人");
-        return;
-      }
       if (!useCarReason.value) {
         showToast("选输入用车事由");
         return;
@@ -710,7 +750,11 @@ onMounted(() => {
         >
       </div>
       <div
-        v-for="item in carList"
+        v-for="item in carList.filter((item) =>
+          ['4', '5'].includes(currentDateType)
+            ? item.vehicleModelLevel === 'specialCar'
+            : true
+        )"
         :key="item.vehicleModelLevel"
         class="car-item"
       >
@@ -758,7 +802,9 @@ onMounted(() => {
         <div class="options">
           <div class="item" @click="showDatePicker = true">
             <span class="title">{{
-              currentDateType == 1 ? "现在出发" : useCarTime.join(" ~ ")
+              currentDateType == 1
+                ? "现在出发"
+                : useCarTimeObj[currentDateType].join(" ~ ")
             }}</span>
             <img
               v-if="currentDateType != 1"
@@ -790,7 +836,9 @@ onMounted(() => {
       <div v-else class="options">
         <div class="item" @click="showDatePicker = true">
           <span class="title">{{
-            currentDateType == 1 ? "现在出发" : useCarTime.join(" ~ ")
+            currentDateType == 1
+              ? "现在出发"
+              : useCarTimeObj[currentDateType].join(" ~ ")
           }}</span>
           <img class="right-icon" src="@/assets/right.png" alt="" />
         </div>
@@ -814,7 +862,7 @@ onMounted(() => {
       <van-popup
         v-model:show="showDatePicker"
         position="bottom"
-        :style="{ height: '30%' }"
+        :style="{ height: '45%' }"
       >
         <van-picker
           v-model="selectedDate"
@@ -909,7 +957,7 @@ onMounted(() => {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding-bottom: 60px;
+  padding-bottom: 68px;
 }
 
 .map-wrap {
@@ -1151,6 +1199,7 @@ onMounted(() => {
 .bottom-wrap {
   .price {
     font-size: 14px;
+    white-space: nowrap;
   }
   > div {
     flex: 1;

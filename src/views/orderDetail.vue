@@ -1223,7 +1223,6 @@ function cancelPay(type) {
 
 .bottom-wrap {
   padding-left: 16px;
-  bottom: 16px;
   .price {
     padding: 0 4px;
   }

@@ -42,6 +42,6 @@ function handleLocationInfo(data) {
 .map-choose-wrap {
   width: 100%;
   height: 100%;
-  padding-bottom: 20px;
+  padding-bottom: 68px;
 }
 </style>
