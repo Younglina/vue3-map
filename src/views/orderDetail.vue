@@ -153,6 +153,9 @@ function getOrderDetail(orderNo, logId) {
         );
       [res.order.endLatitude, res.order.endLngtitude] =
         towgs84.transformWGS2GCJ(res.order.endLatitude, res.order.endLngtitude);
+      res.orderTime = moment(new Date(res.orderTime + "Z")).format(
+        "YYYY-MM-DD HH:mm:ss"
+      );
       Object.assign(orderDetail, res);
       if (!AMap && mapContainer.value) {
         await initMap(tempOrder);
@@ -443,7 +446,7 @@ function cancelOrder(type) {
         logId: orderDetail.order.logId,
       },
     }).then((res) => {
-      console.log(res)
+      console.log(res);
       if (res.logId) {
         showToast("取消成功");
         getOrderDetail(res.orderNo, res.logId);
@@ -512,8 +515,7 @@ const shareTrip = () => {
   //   },
   // });
   wx.miniProgram.navigateTo({
-    url: `/pages/order/share?orderNo=${orderDetail.orderNo}&logId=${
-      orderDetail.order.logId}`,
+    url: `/pages/order/share?orderNo=${orderDetail.orderNo}&logId=${orderDetail.order.logId}`,
   });
 };
 
@@ -686,7 +688,7 @@ function cancelPay(type) {
         class="order-btns"
       >
         <div
-          v-if="!['4','5','6'].includes(orderDetail.orderState)"
+          v-if="!['4', '5', '6'].includes(orderDetail.orderState)"
           class="action-btn"
           @click="cancelOrder('show')"
         >
@@ -760,10 +762,8 @@ function cancelPay(type) {
           </div>
           <div class="info-item time">
             <img src="@/assets/clock.png" class="icon" />
-            <span v-if="orderDetail.order.useCarTime"
-              >{{
-                moment(orderDetail.order.useCarTime).format("MM月DD日 HH:mm")
-              }}
+            <span v-if="orderDetail.orderTime"
+              >{{ moment(orderDetail.orderTime).format("MM月DD日 HH:mm") }}
               {{ orderDetail.order.orderType === "2" ? "预约用车" : "" }}</span
             >
           </div>
