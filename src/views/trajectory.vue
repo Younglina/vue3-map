@@ -40,6 +40,7 @@ const setCarType = (type) => {
   currentCarType.value = type;
   currentDateType.value = "1";
   resetChoose();
+  getBusinessList();
 };
 
 const carList = ref([]);
