@@ -387,7 +387,9 @@ const showStateInfo = computed(() => {
   if (s) {
     return {
       text: s.text,
-      subtext: orderDetail.order.cancelDesc || s.subtext("曹操出行"),
+      subtext:
+        orderDetail.order.cancelDesc ||
+        s.subtext(orderDetail?.order.vehicleOrgName || ""),
     };
   }
   return {
@@ -566,8 +568,9 @@ const showPayTypeDialog = ref(false);
 const choosePayType = ref("1");
 const payTypeList = [
   { name: "微信", value: "1" },
-  { name: "支付宝", value: "2" },
-  { name: "银联云闪付", value: "11" },
+  { name: "现金支付", value: "5" },
+  // { name: "支付宝", value: "2" },
+  // { name: "银联云闪付", value: "11" },
   // { name: "全民付-微信", value: "24" },
   // { name: "全民付-支付宝", value: "25" },
   // { name: "全民付-云闪付", value: "26" },
@@ -688,7 +691,7 @@ function cancelPay(type) {
         class="order-btns"
       >
         <div
-          v-if="!['4', '5', '6'].includes(orderDetail.orderState)"
+          v-if="!['4', '5', '6', '100'].includes(orderDetail.orderState)"
           class="action-btn"
           @click="cancelOrder('show')"
         >
@@ -884,8 +887,8 @@ function cancelPay(type) {
           总额<span class="price">{{ orderDetail.order.orderAmount }}</span
           >元
         </div>
-        <div class="btn min-btn" @click="cancelPay(true)">去支付</div>
-        <!-- showPayTypeDialog = true -->
+        <div class="btn min-btn" @click="showPayTypeDialog = true">去支付</div>
+        <!-- showPayTypeDialog = true cancelPay(true)-->
       </div>
 
       <van-dialog
@@ -908,7 +911,7 @@ function cancelPay(type) {
         </div>
       </van-dialog>
 
-      <!-- <van-dialog
+      <van-dialog
         v-model:show="showPayTypeDialog"
         title="请选择支付方式"
         show-cancel-button
@@ -926,7 +929,7 @@ function cancelPay(type) {
             >
           </van-radio-group>
         </div>
-      </van-dialog> -->
+      </van-dialog>
     </template>
   </div>
 </template>
