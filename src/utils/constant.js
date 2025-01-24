@@ -33,7 +33,7 @@ export const ORDER_STATUS = {
   }, // (费用确认)
   100: {
     text: "已支付",
-    subtext: () => "",
+    subtext: (p) => `${p}提供本次服务`,
   }, // (已支付)
   101: {
     text: "订单超时",
