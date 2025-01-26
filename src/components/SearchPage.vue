@@ -48,7 +48,7 @@ const searchPOIList = ref([]);
 const getPOIByKeyword = (keyword) => {
   AMap.plugin("AMap.PlaceSearch", () => {
     const placeSearch = new AMap.PlaceSearch({
-      city: currentCity.value,
+      // city: currentCity.value,
     });
     placeSearch.search(keyword, (status, result) => {
       if (status === "complete" && result.info === "OK") {

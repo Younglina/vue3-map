@@ -40,7 +40,7 @@ const handleLocationInfo = (info) => {
     latitude: info.latitude,
     address: info.address,
   };
-  getNearByCar();
+  // getNearByCar();
 };
 
 function getNearByCar() {
@@ -58,27 +58,38 @@ function getNearByCar() {
   //   },
   // }).then((res) => {
   //   console.log(res);
-    let res = [{"partnerCarTypeId":"ZSX001","longitude":120.22888244233772,"latitude":30.2022751830219,"direction":0.0,"distance":1801,"duration":null,"partnerDriverId":"1873902006117842946","positionTime":"2025-01-09 23:21:21"}];
-    map.clearMap();
-    const cars = res.map((item) => {
-      return new AMapObj.Marker({
-        position: [item.longitude, item.latitude],
-        icon: new AMapObj.Icon({
-          size: new AMapObj.Size(25, 34),
-          image: gwcIcon,
-          imageSize: new AMapObj.Size(25, 34),
-        }),
-        angle: item.direction,
-        offset: new AMapObj.Pixel(-12, -34),
-      })
+  let res = [
+    {
+      partnerCarTypeId: "ZSX001",
+      longitude: 120.22888244233772,
+      latitude: 30.2022751830219,
+      direction: 0.0,
+      distance: 1801,
+      duration: null,
+      partnerDriverId: "1873902006117842946",
+      positionTime: "2025-01-09 23:21:21",
+    },
+  ];
+  map.clearMap();
+  const cars = res.map((item) => {
+    return new AMapObj.Marker({
+      position: [item.longitude, item.latitude],
+      icon: new AMapObj.Icon({
+        size: new AMapObj.Size(25, 34),
+        image: gwcIcon,
+        imageSize: new AMapObj.Size(25, 34),
+      }),
+      angle: item.direction,
+      offset: new AMapObj.Pixel(-12, -34),
     });
-    map.add(cars);
+  });
+  map.add(cars);
   // });
 }
 
 const handleNavigator = (type) => {
-  if(navigateLoading.value) return
-  navigateLoading.value = true
+  if (navigateLoading.value) return;
+  navigateLoading.value = true;
   if (type === "from" || type === "to") {
     wx.miniProgram.navigateTo({
       url: `/pages/commonChooseArea/index?type=${type}&city=${
@@ -90,9 +101,9 @@ const handleNavigator = (type) => {
       )}&address=${encodeURIComponent(mapData.address)}`,
       success: () => {
         setTimeout(() => {
-          navigateLoading.value = false
-        }, 666)
-      }
+          navigateLoading.value = false;
+        }, 666);
+      },
     });
   }
 };
@@ -124,16 +135,16 @@ const companyAddress = ref({
 });
 
 function toSetCommonArea(type) {
-  if(navigateLoading.value) return
-  navigateLoading.value = true
+  if (navigateLoading.value) return;
+  navigateLoading.value = true;
   const place = type === "home" ? homeAddress.value : companyAddress.value;
   wx.miniProgram.navigateTo({
     url: `/pages/commonChooseArea/index?type=${type}&placeName=${place.placeName}&addressId=${place.addressId}&token=${route.query.token}`,
     success: () => {
       setTimeout(() => {
-        navigateLoading.value = false
-      }, 666)
-    }
+        navigateLoading.value = false;
+      }, 666);
+    },
   });
 }
 

@@ -174,29 +174,29 @@ const getPOIByLocation = async (location) => {
     });
 
     // if (!route.query.name && !route.query.address) {
-      geocoder.getAddress(location, (status, result) => {
-        if (status === "complete" && result.info === "OK") {
-          console.log({ result });
-          const address = result.regeocode;
-          currentAddress.value = address.pois[0];
-          const [longitude, latitude] = [
-            address.pois[0].location.lng,
-            address.pois[0].location.lat,
-          ];
-          emit("location-info", {
-            address: address.pois[0].address,
-            name: address.pois[0].name,
-            point: address.pois[0],
-            longitude,
-            latitude,
-            cityInfo: {
-              name: address.addressComponent.city,
-              code: address.addressComponent.citycode,
-            },
-          });
-          localStorage.setItem("CURRENT_CITY", address.addressComponent.city);
-        }
-      });
+    geocoder.getAddress(location, (status, result) => {
+      if (status === "complete" && result.info === "OK") {
+        console.log({ result });
+        const address = result.regeocode;
+        currentAddress.value = address.pois[0];
+        const [longitude, latitude] = [
+          address.pois[0].location.lng,
+          address.pois[0].location.lat,
+        ];
+        emit("location-info", {
+          address: address.pois[0].address,
+          name: address.pois[0].name,
+          point: address.pois[0],
+          longitude,
+          latitude,
+          cityInfo: {
+            name: address.addressComponent.city,
+            code: address.addressComponent.citycode,
+          },
+        });
+        localStorage.setItem("CURRENT_CITY", address.addressComponent.city);
+      }
+    });
     // } else {
     //   const data = route.query;
     //   currentAddress.value = {

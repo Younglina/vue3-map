@@ -25,7 +25,7 @@ if (url) {
   wx.miniProgram.postMessage({
     data,
   });
-  if (data && data._NODATA !== true) {
+  if (data && data._NODATA !== true && page !== "ZSX_ORDER_CONFIRM") {
     localStorage.removeItem(page);
   }
 }

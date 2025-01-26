@@ -170,7 +170,7 @@ function getOrderDetail(orderNo, logId) {
       if (["2", "3"].includes(orderDetail.orderState)) {
         setStartAndEnd(orderDetail.order);
       }
-      if (["4"].includes(orderDetail.orderState)) {
+      if (["4", "100"].includes(orderDetail.orderState)) {
         map.clearMap();
         getPlanInfo(orderDetail.order);
       }
@@ -184,23 +184,33 @@ function getOrderDetail(orderNo, logId) {
 
 const router = useRouter();
 function handleReOrder() {
-  const orderData = JSON.parse(JSON.stringify(orderDetail.order));
-  if (orderData.orderState === "101") {
-    orderData.overTimeOrder = "1";
-    orderData.overTimeApprovalNo = orderData.approvalNo;
-  }
+  const postData = JSON.parse(localStorage.getItem("ZSX_ORDER_CONFIRM"));
+  const orderData = orderDetail.order;
+  console.log(postData);
   const fromwgs84 = towgs84.transformGCJ2WGS(
-    orderData.startLatitude,
-    orderData.startLngtitude
+    postData.startLatitude,
+    postData.startLngtitude
   );
   const endwgs84 = towgs84.transformGCJ2WGS(
-    orderData.endLatitude,
-    orderData.endLngtitude
+    postData.endLatitude,
+    postData.endLngtitude
   );
-  orderData.startLngtitude = fromwgs84[1];
-  orderData.startLatitude = fromwgs84[0];
-  orderData.endLngtitude = endwgs84[1];
-  orderData.endLatitude = endwgs84[0];
+  postData.startLngtitude = fromwgs84[1];
+  postData.startLatitude = fromwgs84[0];
+  postData.startLng = fromwgs84[1];
+  postData.startLat = fromwgs84[0];
+  postData.endLngtitude = endwgs84[1];
+  postData.endLatitude = endwgs84[0];
+  postData.endLng = endwgs84[1];
+  postData.endLat = endwgs84[0];
+  if (!postData.passengerPhone) {
+    postData.passengerPhone = orderData.passengerPhone;
+    postData.passengerName = orderData.passengerName;
+  }
+  // if (orderData.orderState === "101") {
+  //   orderData.overTimeOrder = "1";
+  //   orderData.overTimeApprovalNo = orderData.approvalNo;
+  // }
   // if (orderData.orderState === "101") {
   //   request({
   //     url: "/app/common/overTime/order/againAdd",
@@ -226,13 +236,13 @@ function handleReOrder() {
   //     });
   // } else {
   request({
-    url: "/app/common/order/add",
+    url: "/app/common/order/v2/add",
     method: "POST",
     headers: {
       Authorization: route.query.token || localStorage.getItem("ZSX_WX_TOKEN"),
     },
     data: {
-      ...orderData,
+      ...postData,
     },
   }).then((res) => {
     // router.replace({
@@ -243,10 +253,12 @@ function handleReOrder() {
     //   },
     // });
     window.location.hash = `#/orderDetail/${new Date().getTime()}?orderNo=${
-      orderData.orderNo
-    }&logId=${res.logId}`;
-    window.location.reload();
-    getOrderDetail(res.orderNo, res.order.logId);
+      res.orderNo
+    }&logId=${res.logId}&token=${
+      route.query.token || localStorage.getItem("ZSX_WX_TOKEN")
+    }`;
+    // window.location.reload();
+    getOrderDetail(res.orderNo, res.logId);
   });
   // }
 }
@@ -290,6 +302,11 @@ function getPlanInfo(orderDetail) {
         });
       updatePosition(pathArray, { ...rest, ...orderDetail });
     } else {
+      if (orderDetail.orderState === "100") {
+        setStartAndEnd(orderDetail);
+        showToast("未获取到路径信息");
+        return;
+      }
       getOrderDetail(route.query.orderNo, route.query.logId);
     }
   });
@@ -363,7 +380,7 @@ function updatePosition(pathArray, info) {
     },
   });
   map.add(centerText);
-  if (info.orderState !== "6") {
+  if (!["6", "100"].includes(info.orderState)) {
     setTimeout(() => {
       getPlanInfo(info);
     }, 3000);

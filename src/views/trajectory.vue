@@ -9,6 +9,7 @@ import taxiIcon from "@/assets/taxi.png";
 import haixiaIcon from "@/assets/haixia.png";
 import fastIcon from "@/assets/fast.png";
 import { showToast } from "vant";
+import axios from "axios";
 
 const vehicleModelLevel = {
   fastCar: fastIcon,
@@ -389,7 +390,9 @@ const runInfo = reactive({
   duration: "",
   mileage: "",
 });
-
+const isShowMap = ref(false);
+const lessDistance = ref(Infinity);
+const lessRoadType = ref(0);
 const initMap = async () => {
   if (route.query.flng && route.query.flat) {
     Object.assign(markerInfo, route.query);
@@ -465,76 +468,113 @@ const initMap = async () => {
     offset: new AMap.Pixel(0, -45),
   });
 
+  for (let i = 0; i <= 2; i++) {
+    await setPolyline(i);
+  }
+  isShowMap.value = true;
+  await setPolyline(lessRoadType.value, true);
   // 将标记和文本添加到地图
   map.add([startMarker, endMarker, startText, endText]);
-
-  // 路径规划
-  driving = new AMap.Driving({
-    map: map,
-    panel: false,
-  });
-
-  // 途径点
-  const opts = {
-    waypoints: [],
-  };
-  if (route.query.pointList && route.query.pointList.length) {
-    const points = JSON.parse(route.query.pointList);
-    points.forEach((item) => {
-      const [lng, lat] = item.location.split(",");
-      opts.waypoints.push([lng, lat]);
-    });
-  }
-
-  // 规划路线
-  driving.search(
-    [markerInfo.flng, markerInfo.flat],
-    [markerInfo.tlng, markerInfo.tlat],
-    opts,
-    (status, result) => {
-      if (status === "complete") {
-        console.log(result);
-        const distance = result.routes[0].distance;
-        const duration = result.routes[0].time;
-        runInfo.duration = formatDuration(duration);
-        runInfo.mileage = formatDistance(distance);
-
-        // 添加路程信息标记
-        const centerText = new AMap.Text({
-          text: `<div style="font-size:12px">${runInfo.mileage} ${runInfo.duration}</div><div style="font-size:10px">*仅做参考示意，以实际行驶为准</div>`,
-          anchor: "center",
-          position: [
-            (Number(route.query.flng) + Number(route.query.tlng)) / 2,
-            (Number(route.query.flat) + Number(route.query.tlat)) / 2,
-          ],
-          style: {
-            padding: "2px 4px",
-            "background-color": "#666f83",
-            opacity: "80%",
-            "border-radius": "4px",
-            "border-width": 0,
-            color: "#ffffff",
-            "min-width": "128px",
-          },
-        });
-
-        map.add(centerText);
-        // 调整地图视野以包含所有标记点和路线
-        // Get all overlays including the driving route
-        setTimeout(() => {
-          const overlays = map.getAllOverlays();
-          map.setFitView(
-            overlays,
-            true,
-            [80, 80, 60, 80], // Increased padding
-            19 // Higher zoom level
-          );
-        }, 800);
-      }
-    }
-  );
+  getNearByCar();
   getBusinessList();
 };
+
+async function setPolyline(policy, isSet) {
+  return new Promise((resolve) => {
+    // 路径规划
+    driving = new AMap.Driving({
+      map: isSet ? map : null,
+      panel: false,
+      autoFitView: true,
+      policy,
+      ferry: 1,
+    });
+    // 途径点
+    const opts = {
+      waypoints: [],
+    };
+    if (route.query.pointList && route.query.pointList.length) {
+      const points = JSON.parse(route.query.pointList);
+      points.forEach((item) => {
+        const [lng, lat] = item.location.split(",");
+        opts.waypoints.push([lng, lat]);
+      });
+    }
+    // 规划路线
+    driving.search(
+      [markerInfo.flng, markerInfo.flat],
+      [markerInfo.tlng, markerInfo.tlat],
+      opts,
+      (status, result) => {
+        if (status === "complete") {
+          const distance = result.routes[0].distance;
+          if (distance < lessDistance.value) {
+            lessDistance.value = distance;
+            lessRoadType.value = policy;
+          }
+          if (isSet) {
+            const duration = result.routes[0].time;
+            runInfo.duration = formatDuration(duration);
+            runInfo.mileage = formatDistance(distance);
+
+            // 添加路程信息标记
+            const centerText = new AMap.Text({
+              text: `<div style="font-size:12px">${runInfo.mileage} ${runInfo.duration}</div><div style="font-size:10px">*仅做参考示意，以实际行驶为准</div>`,
+              anchor: "center",
+              position: [
+                (Number(route.query.flng) + Number(route.query.tlng)) / 2,
+                (Number(route.query.flat) + Number(route.query.tlat)) / 2,
+              ],
+              style: {
+                padding: "2px 4px",
+                "background-color": "#666f83",
+                opacity: "80%",
+                "border-radius": "4px",
+                "border-width": 0,
+                color: "#ffffff",
+                "min-width": "128px",
+              },
+            });
+
+            map.add(centerText);
+          }
+        }
+        resolve();
+      }
+    );
+  });
+}
+
+function getNearByCar() {
+  request({
+    url: "/app/common/driver/v2/nearby",
+    method: "POST",
+    headers: {
+      Authorization: route.query.token,
+    },
+    data: {
+      businessType: currentCarType.value === "person" ? "5" : "11",
+      startLat: markerInfo.flat,
+      startLng: markerInfo.flng,
+      vehicleFreeState: true,
+    },
+  }).then((res) => {
+    // let res = [{"partnerCarTypeId":"ZSX001","longitude":120.22888244233772,"latitude":30.2022751830219,"direction":0.0,"distance":1801,"duration":null,"partnerDriverId":"1873902006117842946","positionTime":"2025-01-09 23:21:21"}];
+    const cars = res.map((item) => {
+      return new AMapObj.Marker({
+        position: [item.longitude, item.latitude],
+        icon: new AMapObj.Icon({
+          size: new AMapObj.Size(25, 34),
+          image: gwcIcon,
+          imageSize: new AMapObj.Size(25, 34),
+        }),
+        angle: item.direction,
+        offset: new AMapObj.Pixel(-12, -34),
+      });
+    });
+    map.add(cars);
+  });
+}
 
 const passengerInfo = reactive({
   name: "",
@@ -675,7 +715,6 @@ const handleOrder = () => {
       }),
       // planningPath: JSON.stringify(planningPath.value),
     };
-    console.log(orderData);
     if (
       passengerInfo.companionInfos.length &&
       passengerInfo.companionInfos[0].companionPhone
@@ -720,7 +759,12 @@ onMounted(() => {
 <template>
   <div class="trajectory-page">
     <div class="map-wrap">
-      <div class="map-container" id="trajectory-wrap" ref="mapContainer"></div>
+      <div
+        v-show="isShowMap"
+        class="map-container"
+        id="trajectory-wrap"
+        ref="mapContainer"
+      ></div>
       <div class="car-type">
         <div
           :class="currentCarType === 'firm' ? 'active' : ''"
