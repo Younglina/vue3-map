@@ -179,7 +179,7 @@ watch(
     console.log("home watch", route.query);
     currentCity.value = localStorage.getItem("CURRENT_CITY") || "";
     window.localStorage.setItem("ZSX_WX_TOKEN", route.query.token);
-    // getAddress();
+    getAddress();
     // request({
     //   url: "/v1/common/miscellaneous/weather",
     // }).then((res) => {
