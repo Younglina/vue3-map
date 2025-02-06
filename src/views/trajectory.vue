@@ -8,7 +8,7 @@ import request from "@/utils/request";
 import taxiIcon from "@/assets/taxi.png";
 import haixiaIcon from "@/assets/haixia.png";
 import fastIcon from "@/assets/fast.png";
-import { showToast } from "vant";
+import { showToast, showLoadingToast } from "vant";
 import axios from "axios";
 
 const vehicleModelLevel = {
@@ -112,6 +112,10 @@ const handleChooseCar = (item) => {
     showCarPicker.value = true;
     return;
   }
+  showLoadingToast({
+    message: "获取车型中...",
+    duration: 0,
+  });
   request({
     url: "/app/hailing/trip/estimate/v2/get",
     method: "POST",
@@ -197,11 +201,15 @@ const handleChooseCar = (item) => {
         tempCarTypeInfo.value = JSON.parse(JSON.stringify(res[0]));
         cacheCarType[item.vehicleModelLevel] = res[0];
         showCarPicker.value = true;
+        handleChooseAllSubCar();
+        closeToast();
       } else {
+        closeToast();
         showToast("无可用车型");
       }
     })
     .catch(() => {
+      closeToast();
       showToast("无可用车型");
     });
 };
@@ -217,7 +225,7 @@ const handleChooseSubCar = (car) => {
     tempCarTypeInfo.value.estimateCarTypes.length;
 };
 // 全选
-const handleChooseAllSubCar = () => {
+function handleChooseAllSubCar() {
   tempCarTypeInfo.value.allChoosed = !tempCarTypeInfo.value.allChoosed;
   tempCarTypeInfo.value.choosedNum = tempCarTypeInfo.value.allChoosed
     ? tempCarTypeInfo.value.estimateCarTypes.length
@@ -225,7 +233,7 @@ const handleChooseAllSubCar = () => {
   tempCarTypeInfo.value.estimateCarTypes.forEach((item) => {
     item.choosed = tempCarTypeInfo.value.allChoosed ? "1" : "0";
   });
-};
+}
 // 已选的车型
 const totalChooseCarTypeNum = ref(0);
 const totalMinMaxPrice = reactive({
