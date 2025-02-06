@@ -9,7 +9,8 @@ import taxiIcon from "@/assets/taxi.png";
 import haixiaIcon from "@/assets/haixia.png";
 import fastIcon from "@/assets/fast.png";
 import { showToast, showLoadingToast } from "vant";
-import axios from "axios";
+import startIcon from "@/assets/startIcon.png";
+import endIcon from "@/assets/endIcon.png";
 
 const vehicleModelLevel = {
   fastCar: fastIcon,
@@ -418,26 +419,26 @@ const initMap = async () => {
     center: [markerInfo.flng, markerInfo.flat],
   });
 
-  // 创建起点和终点标记
-  const startMarker = new AMap.Marker({
-    position: [markerInfo.flng, markerInfo.flat],
-    icon: new AMap.Icon({
-      size: new AMap.Size(25, 34),
-      image: "@/assets/startIcon.png",
-      imageSize: new AMap.Size(25, 34),
-    }),
-    offset: new AMap.Pixel(-12, -34),
-  });
+  // // 创建起点和终点标记
+  // const startMarker = new AMap.Marker({
+  //   position: [markerInfo.flng, markerInfo.flat],
+  //   icon: new AMap.Icon({
+  //     size: new AMap.Size(34, 34),
+  //     image: startIcon,
+  //     imageSize: new AMap.Size(34, 34),
+  //   }),
+  //   offset: new AMap.Pixel(-16, -24),
+  // });
 
-  const endMarker = new AMap.Marker({
-    position: [markerInfo.tlng, markerInfo.tlat],
-    icon: new AMap.Icon({
-      size: new AMap.Size(25, 34),
-      image: "@/assets/endIcon.png",
-      imageSize: new AMap.Size(25, 34),
-    }),
-    offset: new AMap.Pixel(-12, -34),
-  });
+  // const endMarker = new AMap.Marker({
+  //   position: [markerInfo.tlng, markerInfo.tlat],
+  //   icon: new AMap.Icon({
+  //     size: new AMap.Size(34, 34),
+  //     image: startIcon,
+  //     imageSize: new AMap.Size(34, 34),
+  //   }),
+  //   offset: new AMap.Pixel(-16, -24),
+  // });
 
   // 创建文本标记
   const startText = new AMap.Text({
@@ -455,7 +456,7 @@ const initMap = async () => {
       "min-width": "116px",
       "text-align": "center",
     },
-    offset: new AMap.Pixel(0, -45),
+    offset: new AMap.Pixel(0, -32),
   });
 
   const endText = new AMap.Text({
@@ -473,7 +474,7 @@ const initMap = async () => {
       "min-width": "80px",
       "text-align": "center",
     },
-    offset: new AMap.Pixel(0, -45),
+    offset: new AMap.Pixel(0, -32),
   });
 
   for (let i = 0; i <= 2; i++) {
@@ -482,7 +483,7 @@ const initMap = async () => {
   isShowMap.value = true;
   await setPolyline(lessRoadType.value, true);
   // 将标记和文本添加到地图
-  map.add([startMarker, endMarker, startText, endText]);
+  map.add([startText, endText]); // startMarker, endMarker,
   getNearByCar();
   getBusinessList();
 };

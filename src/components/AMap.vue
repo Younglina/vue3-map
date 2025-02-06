@@ -21,10 +21,7 @@
 
 <script setup>
 import AMapLoader from "@amap/amap-jsapi-loader";
-import axios from "axios";
-import EndIcon from "@/assets/endIcon.png";
-import StratIcon from "@/assets/startIcon.png";
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 
 const props = defineProps({
