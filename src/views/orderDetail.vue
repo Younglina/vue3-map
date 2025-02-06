@@ -406,7 +406,7 @@ const showStateInfo = computed(() => {
       text: s.text,
       subtext:
         orderDetail.order.cancelDesc ||
-        s.subtext(orderDetail?.order.vehicleOrgName || ""),
+        s.subtext(orderDetail?.order.partnerCarTypeName || ""),
     };
   }
   return {

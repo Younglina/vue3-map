@@ -12,6 +12,7 @@ const request = (options) => {
       // sign,
       // "X-maas-Tenantid": "zh00002",
       "X-maas-Tenantid": "1",
+      "Accept-Language": "zh-CN,zh;q=0.9",
       ...options.headers, // 可以传入额外的请求头参数
     };
     // 在发送请求之前执行拦截操作
@@ -24,8 +25,8 @@ const request = (options) => {
         resolve(res.data);
       },
       (err) => {
-        console.log(err.response)
-        showToast(err.response.data?.userTip || '服务异常');
+        console.log(err.response);
+        showToast(err.response.data?.userTip || "服务异常");
         reject(err.response);
       }
     );
