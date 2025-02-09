@@ -100,15 +100,17 @@ const handleSelectPOI = (item) => {
     [longitude, latitude] = item.location.split(",");
   }
   if (route.query.type === "from") {
-    router.push({
-      path: `/home/${new Date().getTime()}`,
-      query: {
+    wx.miniProgram.navigateBack();
+    wx.miniProgram.postMessage({
+      data: {
         longitude,
         latitude,
         city: currentCity.value,
         address: item.address,
         name: item.name,
         type: "from",
+        currentCarType: route.query.currentCarType ,
+        _ZSX_PAGE_KEY: "ZSX_MAP_INDEX",
       },
     });
   } else if (route.query.type === "to") {

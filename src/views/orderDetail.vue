@@ -16,6 +16,7 @@ let AMap = null;
 window._AMapSecurityConfig = {
   securityJsCode: "9537a21ee34efb281c3fe92b4f1055bf",
 };
+const isFirst = ref(false)
 async function initMap(order) {
   // 初始化地图
   AMap = await AMapLoader.load({
@@ -26,10 +27,9 @@ async function initMap(order) {
   // 创建地图实例
   map = new AMap.Map(mapContainer.value, {
     zoom: 17,
-    center: [order.startLngtitude, order.startLatitude],
   });
   // 司机出发 司机到达都不用, 会有地方加载
-  if (["1", "2", "3"].includes(order.orderState)) {
+  if (!["1", "2", "3"].includes(order.orderState)) {
     setStartAndEnd(order);
   }
 }
@@ -116,10 +116,11 @@ const setStartAndEnd = async (res) => {
   }
 
   // 行程中不用这里更新
-  if (!["4"].includes(res.orderState)) {
+  if (!["2", "3", "4"].includes(res.orderState)) {
     map.setFitView([startMarker, endMarker], true, [75, 75, 75, 80], 17);
-  } else {
-    map.setFitView([startMarker], true, [75, 75, 75, 80], 19);
+  } else if (!isFirst.value) {
+    map.setFitView([startMarker, endMarker], true, [75, 75, 75, 80], 19);
+    isFirst.value = true;
   }
 };
 
@@ -170,12 +171,13 @@ function getOrderDetail(orderNo, logId) {
       if (["2", "3"].includes(orderDetail.orderState)) {
         setStartAndEnd(orderDetail.order);
       }
-      if (["4", "100"].includes(orderDetail.orderState)) {
+      if (["4"].includes(orderDetail.orderState)) {
         map.clearMap();
         getPlanInfo(orderDetail.order);
       }
-      if (["5", "6"].includes(orderDetail.orderState)) {
+      if (["5", "6", "100"].includes(orderDetail.orderState)) {
         map.clearMap();
+        clearInterval(interval);
         getRealTrip(orderDetail.order);
       }
     });
@@ -341,6 +343,7 @@ const polyline = ref(null);
 let driving = null;
 function updatePosition(pathArray, info) {
   setStartAndEnd({
+    ...info,
     startLngtitude: pathArray[0][0] || info.longitude,
     startLatitude: pathArray[0][1] || info.latitude,
     endLngtitude: pathArray[pathArray.length - 1][0],
@@ -362,25 +365,27 @@ function updatePosition(pathArray, info) {
     polyline.value.setPath(pathArray);
     polyline.value.setMap(map);
   }
-  // 添加路程信息标记
-  const centerText = new AMap.Text({
-    text: `<div style="font-size:12px">距离目的地估计${(
-      info.arriveMileage / 1000
-    ).toFixed(1)}公里 ${formatDuration(info.arriveTime)}`,
-    anchor: "center",
-    position: [info.longitude, info.latitude],
-    style: {
-      padding: "2px 4px",
-      "background-color": "#666f83",
-      opacity: "80%",
-      "border-radius": "4px",
-      "border-width": 0,
-      color: "#ffffff",
-      "min-width": "128px",
-    },
-  });
-  map.add(centerText);
-  if (!["6", "100"].includes(info.orderState)) {
+  if (!["100"]){
+    // 添加路程信息标记
+    const centerText = new AMap.Text({
+      text: `<div style="font-size:12px">距离目的地估计${(
+        info.arriveMileage / 1000
+      ).toFixed(1)}公里 ${formatDuration(info.arriveTime)}`,
+      anchor: "center",
+      position: [info.longitude, info.latitude],
+      style: {
+        padding: "2px 4px",
+        "background-color": "#666f83",
+        opacity: "80%",
+        "border-radius": "4px",
+        "border-width": 0,
+        color: "#ffffff",
+        "min-width": "128px",
+      },
+    });
+    map.add(centerText);
+  }
+  if (!["5", "6", "100"].includes(info.orderState)) {
     setTimeout(() => {
       getPlanInfo(info);
     }, 3000);
@@ -556,6 +561,25 @@ const contactService = () => {
     });
 };
 
+const pingjia = (level) => {
+  request({
+    url: "/app/common/comment/add",
+    method: "POST",
+    headers: {
+      Authorization: route.query.token || localStorage.getItem("ZSX_WX_TOKEN"),
+    },
+    data: {
+      orderNo: orderDetail.orderNo,
+      businessType: orderDetail.businessType,
+      content: "",
+      commentLevel: level,
+    },
+  }).then((res) => {
+    console.log(res);
+    showToast("评价成功");
+  });
+}
+
 watch(
   () => route.params,
   () => {
@@ -597,7 +621,7 @@ function cancelPay(type) {
   if (type === "cancel") return (showPayTypeDialog.value = false);
   const order = orderDetail.order;
   wx.miniProgram.navigateTo({
-    url: `/pages/pay/index?orderNo=${order.orderNo}&businessType=${
+    url: `/pages/pay/index?orderNo=${order.orderNo}&logId=${order.logId}&businessType=${
       order.businessType
     }&payAmount=${order.orderAmount}&subject=${encodeURIComponent(
       `${order.startAddress} - ${order.endAddress}出行费用`
@@ -750,6 +774,35 @@ function cancelPay(type) {
         <div class="action-btn" @click="contactService">
           <img src="@/assets/kefu.png" alt="" />
           <span>客服</span>
+        </div>
+      </div>
+
+      <div v-if="orderDetail.orderState == 100" class="order-info">
+        <div class="c-card">
+          您对本次行程还满意吗？（匿名）
+          <div class="order-btns">
+            <div
+              class="action-btn"
+              @click="pingjia(0)"
+            >
+              <img src="@/assets/hzg.svg" alt="" />
+              <span>很糟糕</span>
+            </div>
+            <div
+              class="action-btn"
+              @click="pingjia(1)"
+            >
+              <img src="@/assets/ybb.svg" alt="" />
+              <span>一般般</span>
+            </div>
+            <div
+              class="action-btn"
+              @click="pingjia(2)"
+            >
+              <img src="@/assets/tbl.svg" alt="" />
+              <span>太棒了</span>
+            </div>
+          </div>
         </div>
       </div>
 

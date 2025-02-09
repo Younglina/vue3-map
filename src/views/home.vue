@@ -17,16 +17,18 @@ const mapData = reactive({
 
 let AMapObj = null;
 let map = null;
+const route = useRoute();
 const mapLoaded = (m) => {
   map = m.map;
   AMapObj = m.AMap;
-  if (route.query.longitude && route.query.latitude) {
+  if (route.query.longitude && route.query.latitude && !route.query.name) {
     map.setCenter([route.query.longitude, route.query.latitude]);
     setArea(route.query);
   }
 };
 
 const handleLocationInfo = (info) => {
+  if(route.query.name) return;
   currentCity.value =
     localStorage.getItem("CURRENT_CITY") || info.cityInfo.name;
   localStorage.setItem("CURRENT_CITY", info.cityInfo.name);
@@ -57,7 +59,6 @@ function getNearByCar() {
   //     vehicleFreeState: true,
   //   },
   // }).then((res) => {
-  //   console.log(res);
   let res = [
     {
       partnerCarTypeId: "ZSX001",
@@ -87,6 +88,12 @@ function getNearByCar() {
   // });
 }
 
+const currentCarType = ref("firm");
+const setCarType = (type) => {
+  currentCarType.value = type;
+  window.localStorage.setItem("CAR_TYPE", type);
+};
+
 const handleNavigator = (type) => {
   if (navigateLoading.value) return;
   navigateLoading.value = true;
@@ -98,7 +105,7 @@ const handleNavigator = (type) => {
         mapData.latitude
       }&name=${encodeURIComponent(
         mapData.currentAreaName
-      )}&address=${encodeURIComponent(mapData.address)}`,
+      )}&address=${encodeURIComponent(mapData.address)}&currentCarType=${currentCarType.value}`,
       success: () => {
         setTimeout(() => {
           navigateLoading.value = false;
@@ -118,12 +125,6 @@ function setArea(data) {
   }
 }
 
-const currentCarType = ref("firm");
-const setCarType = (type) => {
-  currentCarType.value = type;
-  window.localStorage.setItem("CAR_TYPE", type);
-};
-setCarType("firm");
 
 const homeAddress = ref({
   addressName: "",
@@ -172,14 +173,19 @@ function getAddress() {
   });
 }
 
-const route = useRoute();
 watch(
   () => route.params,
   () => {
     console.log("home watch", route.query);
     currentCity.value = localStorage.getItem("CURRENT_CITY") || "";
+    currentCarType.value = route.query.currentCarType || "firm";
     window.localStorage.setItem("ZSX_WX_TOKEN", route.query.token);
+    window.localStorage.setItem("CAR_TYPE", currentCarType.value);
     getAddress();
+    if (route.query.longitude && route.query.latitude && map) {
+      map.setCenter([route.query.longitude, route.query.latitude]);
+    }
+    setArea(route.query);
     // request({
     //   url: "/v1/common/miscellaneous/weather",
     // }).then((res) => {
@@ -194,6 +200,7 @@ watch(
     <div class="map-wrap">
       <a-map
         class="map-dom"
+        :currentAreaName="mapData.currentAreaName"
         @loaded="mapLoaded"
         @location-info="handleLocationInfo"
       ></a-map>
