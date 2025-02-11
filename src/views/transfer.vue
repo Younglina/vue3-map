@@ -1,9 +1,11 @@
 <script setup>
 import { useRoute } from "vue-router";
+import {  showLoadingToast } from "vant";
 const route = useRoute();
 const page = route.query.page;
 let url = "";
 let data = "";
+showLoadingToast();
 switch (page) {
   case "ZSX_ORDER_CONFIRM":
     url = "/pages/order/confirm";
@@ -31,6 +33,6 @@ if (url) {
 }
 </script>
 <template>
-  <view>加载中</view>
+  <div></div>
 </template>
 <style scoped lang="scss"></style>
