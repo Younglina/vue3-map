@@ -48,7 +48,7 @@ const searchPOIList = ref([]);
 const getPOIByKeyword = (keyword) => {
   AMap.plugin("AMap.PlaceSearch", () => {
     const placeSearch = new AMap.PlaceSearch({
-      // city: currentCity.value,
+      city: currentCity.value,
     });
     placeSearch.search(keyword, (status, result) => {
       if (status === "complete" && result.info === "OK") {
@@ -109,7 +109,7 @@ const handleSelectPOI = (item) => {
         address: item.address,
         name: item.name,
         type: "from",
-        currentCarType: route.query.currentCarType ,
+        currentCarType: route.query.currentCarType,
         _ZSX_PAGE_KEY: "ZSX_MAP_INDEX",
       },
     });
