@@ -16,7 +16,7 @@ let AMap = null;
 window._AMapSecurityConfig = {
   securityJsCode: "9537a21ee34efb281c3fe92b4f1055bf",
 };
-const isFirst = ref(false)
+const isFirst = ref(false);
 async function initMap(order) {
   // 初始化地图
   AMap = await AMapLoader.load({
@@ -149,11 +149,14 @@ function getOrderDetail(orderNo, logId) {
       const tempOrder = { ...res.order };
       [res.order.startLatitude, res.order.startLngtitude] =
         towgs84.transformWGS2GCJ(
-          res.order.startLatitude,
-          res.order.startLngtitude
+          +res.order.startLatitude,
+          +res.order.startLngtitude
         );
       [res.order.endLatitude, res.order.endLngtitude] =
-        towgs84.transformWGS2GCJ(res.order.endLatitude, res.order.endLngtitude);
+        towgs84.transformWGS2GCJ(
+          +res.order.endLatitude,
+          +res.order.endLngtitude
+        );
       res.orderTime = moment(new Date(res.orderTime + "Z")).format(
         "YYYY-MM-DD HH:mm:ss"
       );
@@ -365,7 +368,7 @@ function updatePosition(pathArray, info) {
     polyline.value.setPath(pathArray);
     polyline.value.setMap(map);
   }
-  if (!["100"]){
+  if (!["100"]) {
     // 添加路程信息标记
     const centerText = new AMap.Text({
       text: `<div style="font-size:12px">距离目的地估计${(
@@ -578,7 +581,7 @@ const pingjia = (level) => {
     console.log(res);
     showToast("评价成功");
   });
-}
+};
 
 watch(
   () => route.params,
@@ -621,9 +624,11 @@ function cancelPay(type) {
   if (type === "cancel") return (showPayTypeDialog.value = false);
   const order = orderDetail.order;
   wx.miniProgram.navigateTo({
-    url: `/pages/pay/index?orderNo=${order.orderNo}&logId=${order.logId}&businessType=${
-      order.businessType
-    }&payAmount=${order.orderAmount}&subject=${encodeURIComponent(
+    url: `/pages/pay/index?orderNo=${order.orderNo}&logId=${
+      order.logId
+    }&businessType=${order.businessType}&payAmount=${
+      order.orderAmount
+    }&subject=${encodeURIComponent(
       `${order.startAddress} - ${order.endAddress}出行费用`
     )}&payType=${choosePayType.value}&payAction=4`,
   });
@@ -781,24 +786,15 @@ function cancelPay(type) {
         <div class="c-card">
           您对本次行程还满意吗？（匿名）
           <div class="order-btns">
-            <div
-              class="action-btn"
-              @click="pingjia(0)"
-            >
+            <div class="action-btn" @click="pingjia(0)">
               <img src="@/assets/hzg.svg" alt="" />
               <span>很糟糕</span>
             </div>
-            <div
-              class="action-btn"
-              @click="pingjia(1)"
-            >
+            <div class="action-btn" @click="pingjia(1)">
               <img src="@/assets/ybb.svg" alt="" />
               <span>一般般</span>
             </div>
-            <div
-              class="action-btn"
-              @click="pingjia(2)"
-            >
+            <div class="action-btn" @click="pingjia(2)">
               <img src="@/assets/tbl.svg" alt="" />
               <span>太棒了</span>
             </div>

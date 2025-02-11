@@ -164,9 +164,10 @@ const handleSelectPOI = (item) => {
     });
   } else if (route.query.type === "changeEndAddress") {
     const [changeLatitude, changeLngtitude] = towgs84.transformWGS2GCJ(
-      latitude,
-      longitude
+      +latitude,
+      +longitude
     );
+    console.log(latitude, longitude, changeLatitude, changeLngtitude);
     request({
       url: "/app/hailing/order/address/update",
       method: "POST",

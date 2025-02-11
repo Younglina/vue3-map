@@ -4,6 +4,7 @@ import request from "@/utils/request";
 import gwcIcon from "@/assets/gwc.png";
 import { watch, reactive, ref } from "vue";
 import { useRoute } from "vue-router";
+import { showToast } from "vant";
 
 const currentCity = ref("");
 const navigateLoading = ref(false);
@@ -28,7 +29,7 @@ const mapLoaded = (m) => {
 };
 
 const handleLocationInfo = (info) => {
-  if(route.query.name) return;
+  if (route.query.name) return;
   currentCity.value =
     localStorage.getItem("CURRENT_CITY") || info.cityInfo.name;
   localStorage.setItem("CURRENT_CITY", info.cityInfo.name);
@@ -105,7 +106,9 @@ const handleNavigator = (type) => {
         mapData.latitude
       }&name=${encodeURIComponent(
         mapData.currentAreaName
-      )}&address=${encodeURIComponent(mapData.address)}&currentCarType=${currentCarType.value}`,
+      )}&address=${encodeURIComponent(mapData.address)}&currentCarType=${
+        currentCarType.value
+      }`,
       success: () => {
         setTimeout(() => {
           navigateLoading.value = false;
@@ -124,7 +127,6 @@ function setArea(data) {
     mapData.address = data.address;
   }
 }
-
 
 const homeAddress = ref({
   addressName: "",
@@ -176,6 +178,7 @@ function getAddress() {
 watch(
   () => route.params,
   () => {
+    showToast(JSON.stringify(route.query));
     console.log("home watch", route.query);
     currentCity.value = localStorage.getItem("CURRENT_CITY") || "";
     currentCarType.value = route.query.currentCarType || "firm";
@@ -186,11 +189,6 @@ watch(
       map.setCenter([route.query.longitude, route.query.latitude]);
     }
     setArea(route.query);
-    // request({
-    //   url: "/v1/common/miscellaneous/weather",
-    // }).then((res) => {
-    //   console.log(res);
-    // });
   },
   { deep: true, immediate: true }
 );
