@@ -178,7 +178,7 @@ function getAddress() {
 watch(
   () => route.params,
   () => {
-    showToast(JSON.stringify(route.query));
+    // showToast(JSON.stringify(route.query));
     console.log("home watch", route.query);
     currentCity.value = localStorage.getItem("CURRENT_CITY") || "";
     currentCarType.value = route.query.currentCarType || "firm";
