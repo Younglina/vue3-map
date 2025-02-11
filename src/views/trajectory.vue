@@ -920,7 +920,7 @@ onMounted(() => {
       >
         <van-picker
           v-model="selectedDate"
-          title="标题"
+          title="日期时间选择"
           :columns="columns"
           @confirm="onDateConfirm"
           @cancel="showDatePicker = false"

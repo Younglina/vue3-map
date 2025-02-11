@@ -19,7 +19,7 @@ export function generateDateArray() {
   const dayNames = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
   const dateArray = [];
 
-  for (let i = 0; i < 29; i++) {
+  for (let i = 1; i < 29; i++) {
     const currentDate = new Date(today);
     currentDate.setDate(today.getDate() + i);
 
