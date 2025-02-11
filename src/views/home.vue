@@ -184,7 +184,9 @@ watch(
     currentCarType.value = route.query.currentCarType || "firm";
     window.localStorage.setItem("ZSX_WX_TOKEN", route.query.token);
     window.localStorage.setItem("CAR_TYPE", currentCarType.value);
-    getAddress();
+    if (route.query.token && route.query.token !== undefined) {
+      getAddress();
+    }
     if (route.query.longitude && route.query.latitude && map) {
       map.setCenter([route.query.longitude, route.query.latitude]);
     }
