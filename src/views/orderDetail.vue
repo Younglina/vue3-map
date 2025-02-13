@@ -160,6 +160,16 @@ function getOrderDetail(orderNo, logId) {
       res.orderTime = moment(new Date(res.orderTime + "Z")).format(
         "YYYY-MM-DD HH:mm:ss"
       );
+      if (res.order.orderAmountList.length > 0) {
+        const baseFee = res.order.orderAmountList.find(
+          (item) => item.priceType == "7"
+        );
+        if (baseFee && baseFee.amount <= res.order.orderAmount) {
+          res.order.orderAmountList = res.order.orderAmountList.filter(
+            (item) => item.priceType != "7"
+          );
+        }
+      }
       Object.assign(orderDetail, res);
       if (!AMap && mapContainer.value) {
         await initMap(tempOrder);
