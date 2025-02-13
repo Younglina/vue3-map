@@ -184,7 +184,7 @@ const handleSelectPOI = (item) => {
     }).then((res) => {
       showToast("修改成功");
       wx.miniProgram.redirectTo({
-        url: `/pages/order/detail/${new Date().getTime()}?type=changeEndAddress&orderNo=${
+        url: `/pages/order/detail?type=changeEndAddress&orderNo=${
           route.query.orderNo
         }&logId=${route.query.logId}`,
       });

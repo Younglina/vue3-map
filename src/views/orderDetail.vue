@@ -132,86 +132,83 @@ const businessData = {
 
 const orderDetail = reactive({});
 function getOrderDetail(orderNo, logId) {
-  let interval = setInterval(() => {
-    request({
-      url: "/app/common/order/get",
-      method: "POST",
-      headers: {
-        Authorization:
-          route.query.token || localStorage.getItem("ZSX_WX_TOKEN"),
-      },
-      data: {
-        orderNo,
-        logId,
-      },
-    }).then(async (res) => {
-      console.log(res);
-      const tempOrder = { ...res.order };
-      [res.order.startLatitude, res.order.startLngtitude] =
-        towgs84.transformWGS2GCJ(
-          +res.order.startLatitude,
-          +res.order.startLngtitude
+  return new Promise((resolve) => {
+    const fetchOrder = async () => {
+      try {
+        const res = await request({
+          url: "/app/common/order/get",
+          method: "POST",
+          headers: {
+            Authorization:
+              route.query.token || localStorage.getItem("ZSX_WX_TOKEN"),
+          },
+          data: {
+            orderNo,
+            logId,
+          },
+        });
+        
+        console.log(res);
+        const tempOrder = { ...res.order };
+        [res.order.startLatitude, res.order.startLngtitude] =
+          towgs84.transformWGS2GCJ(
+            +res.order.startLatitude,
+            +res.order.startLngtitude
+          );
+        [res.order.endLatitude, res.order.endLngtitude] =
+          towgs84.transformWGS2GCJ(
+            +res.order.endLatitude,
+            +res.order.endLngtitude
+          );
+        res.orderTime = moment(new Date(res.orderTime + "Z")).format(
+          "YYYY-MM-DD HH:mm:ss"
         );
-      [res.order.endLatitude, res.order.endLngtitude] =
-        towgs84.transformWGS2GCJ(
-          +res.order.endLatitude,
-          +res.order.endLngtitude
-        );
-      res.orderTime = moment(new Date(res.orderTime + "Z")).format(
-        "YYYY-MM-DD HH:mm:ss"
-      );
-      Object.assign(orderDetail, res);
-      if (!AMap && mapContainer.value) {
-        await initMap(tempOrder);
+        Object.assign(orderDetail, res);
+        
+        if (!AMap && mapContainer.value) {
+          await initMap(tempOrder);
+        }
+        
+        if (["2", "3"].includes(orderDetail.orderState)) {
+          setStartAndEnd(orderDetail.order);
+        }
+        if (["4"].includes(orderDetail.orderState)) {
+          map.clearMap();
+          getPlanInfo(orderDetail.order);
+        }
+        if (["5", "6", "100"].includes(orderDetail.orderState)) {
+          map.clearMap();
+          getRealTrip(orderDetail.order);
+          resolve(res); // 完成状态，结束轮询
+          return true;
+        }
+        if (orderDetail.orderNo && !["1", "2", "3"].includes(orderDetail.orderState)) {
+          resolve(res); // 非初始状态，结束轮询
+          return true;
+        }
+        
+        return false; // 继续轮询
+      } catch (error) {
+        console.error('获取订单详情失败:', error);
+        return false;
       }
-      if (
-        orderDetail.orderNo &&
-        !["1", "2", "3"].includes(orderDetail.orderState)
-      ) {
-        clearInterval(interval);
-        interval = null;
+    };
+
+    const poll = async () => {
+      const shouldStop = await fetchOrder();
+      if (!shouldStop) {
+        setTimeout(poll, 2000);
       }
-      if (["2", "3"].includes(orderDetail.orderState)) {
-        setStartAndEnd(orderDetail.order);
-      }
-      if (["4"].includes(orderDetail.orderState)) {
-        map.clearMap();
-        getPlanInfo(orderDetail.order);
-      }
-      if (["5", "6", "100"].includes(orderDetail.orderState)) {
-        map.clearMap();
-        clearInterval(interval);
-        getRealTrip(orderDetail.order);
-      }
-    });
-  }, 2000);
+    };
+
+    poll(); // 开始轮询
+  });
 }
 
 const router = useRouter();
 function handleReOrder() {
   const postData = JSON.parse(localStorage.getItem("ZSX_ORDER_CONFIRM"));
-  const orderData = orderDetail.order;
-  console.log(postData);
-  const fromwgs84 = towgs84.transformGCJ2WGS(
-    postData.startLatitude,
-    postData.startLngtitude
-  );
-  const endwgs84 = towgs84.transformGCJ2WGS(
-    postData.endLatitude,
-    postData.endLngtitude
-  );
-  postData.startLngtitude = fromwgs84[1];
-  postData.startLatitude = fromwgs84[0];
-  postData.startLng = fromwgs84[1];
-  postData.startLat = fromwgs84[0];
-  postData.endLngtitude = endwgs84[1];
-  postData.endLatitude = endwgs84[0];
-  postData.endLng = endwgs84[1];
-  postData.endLat = endwgs84[0];
-  if (!postData.passengerPhone) {
-    postData.passengerPhone = orderData.passengerPhone;
-    postData.passengerName = orderData.passengerName;
-  }
+  const orderData = formatToNewOrder(orderDetail);
   // if (orderData.orderState === "101") {
   //   orderData.overTimeOrder = "1";
   //   orderData.overTimeApprovalNo = orderData.approvalNo;
@@ -595,7 +592,7 @@ watch(
 );
 
 onMounted(async () => {
-  getOrderDetail(route.query.orderNo, route.query.logId);
+  await getOrderDetail(route.query.orderNo, route.query.logId);
   getCancelReason();
 });
 
@@ -632,6 +629,50 @@ function cancelPay(type) {
       `${order.startAddress} - ${order.endAddress}出行费用`
     )}&payType=${choosePayType.value}&payAction=4`,
   });
+}
+
+function formatToNewOrder(orderDetail) {
+  const { order } = orderDetail
+  return {
+    passengerPhone: order.passengerPhone,
+    passengerName: order.passengerName,
+    companionInfos: [],
+    businessType: order.businessType,
+    orderType: Number(order.orderType),
+    endAddress: order.endAddress,
+    endLatitude: order.endLatitude,
+    endLngtitude: order.endLngtitude,
+    endLat: order.endLatitude,
+    endLng: order.endLngtitude,
+    endAddressFull: order.endAddressFull,
+    startAddress: order.startAddress,
+    startLatitude: order.startLatitude,
+    startLngtitude: order.startLngtitude,
+    startLng: order.startLngtitude,
+    startLat: order.startLatitude,
+    startAddressFull: order.startAddressFull || '',
+    useCarReason: order.useCarReason,
+    rentDuration: '12', // 默认值，可根据需要修改
+    useCarTime: order.useCarTime,
+    // 以下字段为固定值或需要从其他地方获取
+    totalChooseCarTypeNum: 2,
+    totalMinMaxPriceStr: '18.02~20',
+    addCarTypes: [
+      {
+        carTypeId: 'HS-DD-SpecialCar',
+        estimateAmount: 20,
+        estimateId: 'P20001_S20001_c4bba3c30b874b969e561e2567a44ed1',
+        vehicleModelLevel: 'specialCar'
+      },
+      {
+        carTypeId: 'ZSX001',
+        estimateAmount: 18.02,
+        estimateId: '7de3d87215c245f8a38604783d48e8ee',
+        vehicleModelLevel: 'specialCar'
+      }
+    ],
+    isCallMe: '1'
+  }
 }
 </script>
 <template>
@@ -1220,6 +1261,7 @@ function cancelPay(type) {
   max-width: 12px;
   height: 12px;
   max-height: 12px;
+
 }
 
 .from-area::before {
