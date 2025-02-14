@@ -362,7 +362,7 @@ const onDateConfirm = (value) => {
     currentDateType.value,
     new Date(`${v[0].replaceAll("-", "/")} ${v[1]}:${v[2]}:00`).getTime()
   );
-  useCarTimeStr.value = moment(`${v[0]} ${v[1]}:${v[2]}:00`).format(
+  useCarTimeStr.value = moment(`${v[0]} ${v[1]}:${v[2]}:00`).utc().format(
     "YYYY-MM-DD HH:mm:ss"
   );
   showDatePicker.value = false;
@@ -689,10 +689,11 @@ const handleOrder = () => {
         return;
       }
     }
-    if (totalChooseCarTypeNum.value === 0) {
-      showToast("请选择车型");
-      return;
-    }
+    // if (totalChooseCarTypeNum.value === 0) {
+    //   showToast("请选择车型");
+    //   return;
+    // }
+    console.log(useCarTimeStr)
     const orderData = {
       businessType: currentCarType.value === "firm" ? "11" : "5",
       orderType: useCarTimeStr.value ? currentDateType.value : 1,
