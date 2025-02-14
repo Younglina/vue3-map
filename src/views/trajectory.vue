@@ -682,7 +682,8 @@ const handleOrder = () => {
       showToast("日租、半日租只能选择专车");
       return;
     }
-    if (currentCarType.value === "film") {
+    console.log(currentCarType.value,useCarReason)
+    if (currentCarType.value === "firm") {
       if (!useCarReason.value) {
         showToast("选输入用车事由");
         return;

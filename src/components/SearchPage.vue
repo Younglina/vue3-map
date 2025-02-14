@@ -167,7 +167,6 @@ const handleSelectPOI = (item) => {
       +latitude,
       +longitude
     );
-    console.log(latitude, longitude, changeLatitude, changeLngtitude);
     request({
       url: "/app/hailing/order/address/update",
       method: "POST",
@@ -178,8 +177,8 @@ const handleSelectPOI = (item) => {
         orderNo: route.query.orderNo,
         address: item.name,
         endAddressFull: item.address,
-        latitude: changeLngtitude,
-        longitude: changeLatitude,
+        latitude: changeLatitude,
+        longitude: changeLngtitude,
       },
     }).then((res) => {
       showToast("修改成功");

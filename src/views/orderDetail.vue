@@ -35,7 +35,7 @@ async function initMap(order) {
 }
 
 const route = useRoute();
-const setStartAndEnd = async (res) => {
+const setStartAndEnd = async (res, isFit) => {
   map.clearMap();
   // 创建起点和终点标记
   const startMarker = new AMap.Marker({
@@ -122,6 +122,9 @@ const setStartAndEnd = async (res) => {
     map.setFitView([startMarker, endMarker], true, [75, 75, 75, 80], 19);
     isFirst.value = true;
   }
+  if(isFit){
+    map.setFitView([startMarker], true, [75, 75, 75, 80], 19);
+  }
 };
 
 const businessData = {
@@ -147,7 +150,6 @@ function getOrderDetail(orderNo, logId) {
             logId,
           },
         });
-        
         console.log(res);
         const tempOrder = { ...res.order };
         [res.order.startLatitude, res.order.startLngtitude] =
@@ -174,7 +176,7 @@ function getOrderDetail(orderNo, logId) {
         }
         if (["4"].includes(orderDetail.orderState)) {
           map.clearMap();
-          getPlanInfo(orderDetail.order);
+          getPlanInfo(orderDetail.order, true);
         }
         if (["5", "6", "100"].includes(orderDetail.orderState)) {
           map.clearMap();
@@ -281,7 +283,7 @@ function getDriverLocation(order) {
   });
 }
 
-function getPlanInfo(orderDetail) {
+function getPlanInfo(orderDetail, isFit) {
   request({
     url: "/app/hailing/order/path/planning/info",
     method: "POST",
@@ -304,7 +306,7 @@ function getPlanInfo(orderDetail) {
         .filter(function (item) {
           return item[0] && item[1];
         });
-      updatePosition(pathArray, { ...rest, ...orderDetail });
+      updatePosition(pathArray, { ...rest, ...orderDetail }, isFit);
     } else {
       if (orderDetail.orderState === "100") {
         setStartAndEnd(orderDetail);
@@ -343,7 +345,7 @@ function getRealTrip(orderDetail) {
 
 const polyline = ref(null);
 let driving = null;
-function updatePosition(pathArray, info) {
+function updatePosition(pathArray, info, isFit) {
   setStartAndEnd({
     ...info,
     startLngtitude: pathArray[0][0] || info.longitude,
@@ -351,7 +353,7 @@ function updatePosition(pathArray, info) {
     endLngtitude: pathArray[pathArray.length - 1][0],
     endLatitude: pathArray[pathArray.length - 1][1],
     orderState: info.orderState,
-  });
+  }, isFit);
   if (!polyline.value) {
     polyline.value = new AMap.Polyline({
       map: map,
@@ -853,7 +855,7 @@ function formatToNewOrder(orderDetail) {
             <img src="@/assets/company.png" class="icon" />
             <span>
               {{
-                orderDetail.order.carUseType === "firm"
+                orderDetail.order.businessType === '11'
                   ? "企业用车"
                   : "个人用车"
               }}
